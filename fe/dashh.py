@@ -33,7 +33,7 @@ CURRENT_DATETIME = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # --- COLOR PALETTE DEFINITION ---
 COLOR_PRIMARY = "#00ADB5"  # Teal (Cool)
-COLOR_SECONDARY = "#FFCA28" # Amber (Warm) - Replaces the neon green
+COLOR_SECONDARY = "#FFCA28" # Amber (Warm)
 
 # Initialize the app
 app = dash.Dash(
@@ -59,7 +59,6 @@ def create_sidebar():
                 children=[
                     html.H2("CsF1", style={"margin": "10px 0", "color": "#00ffff"}),
                 ],
-                # UPDATED: Removed 'borderBottom' to remove the line above Overview
                 style={"display": "flex", "alignItems": "center", "justifyContent": "center", "padding": "20px"}
             ),
             html.Button(
@@ -72,7 +71,7 @@ def create_sidebar():
                 children=[
                     # --- 1. OVERVIEW (HOME) ---
                     html.A(
-                        className="nav-link active", 
+                        className="nav-link active", # Default active
                         id="home-link",
                         href="#",
                         children=[
@@ -82,7 +81,6 @@ def create_sidebar():
                     ),
                     
                     # --- NEW SEPARATOR LINE ---
-                    # This puts a line between Overview and Temp & Humidity
                     html.Hr(style={'borderColor': 'rgba(255, 255, 255, 0.1)', 'margin': '5px 15px 15px 15px'}),
                     
                     # --- 2. TEMP & HUMIDITY ---
@@ -118,7 +116,6 @@ def create_sidebar():
                         ]
                     ),
                     
-                    # Existing Separator for Retrieve Data
                     html.Hr(style={'borderColor': 'rgba(255, 255, 255, 0.1)', 'margin': '15px 10px'}),
                     
                     # --- 5. RETRIEVE DATA ---
@@ -132,7 +129,7 @@ def create_sidebar():
                         ]
                     ),
                 ],
-                style={"marginTop": "10px"} # Reduced margin slightly since header border is gone
+                style={"marginTop": "10px"}
             ),
         ]
     )
@@ -314,35 +311,19 @@ def temp_humidity_layout():
             ]
         ),
         
-        # Graphs Section (Unchanged)
+        # Graphs Section (Selectors Removed)
         html.Div(
             style={"display": "flex", "flexWrap": "wrap"},
             children=[
                 html.Div(
                     style={"flex": "1 1 50%", "minWidth": "400px"},
                     children=[
-                        create_sensor_selector(
-                            "temp-sensor-selector",
-                            [
-                                {"label": html.Span([html.Span(className="status-indicator status-connected"), "Both Sensors"]), "value": "both"},
-                                {"label": html.Span([html.Span(className="status-indicator", style={"backgroundColor": "#ff0000"}), "Ambient"]), "value": "sensor1"},
-                                {"label": html.Span([html.Span(className="status-indicator", style={"backgroundColor": "#00ffff"}), "Optical Bench"]), "value": "sensor2"}
-                            ]
-                        ),
                         create_graph_card("temperature-graph", "Temperature (°C)")
                     ]
                 ),
                 html.Div(
                     style={"flex": "1 1 50%", "minWidth": "400px"},
                     children=[
-                        create_sensor_selector(
-                            "humidity-sensor-selector",
-                            [
-                                {"label": html.Span([html.Span(className="status-indicator status-connected"), "Both Sensors"]), "value": "both"},
-                                {"label": html.Span([html.Span(className="status-indicator", style={"backgroundColor": "#ff0000"}), "Ambient"]), "value": "sensor1"},
-                                {"label": html.Span([html.Span(className="status-indicator", style={"backgroundColor": "#00ffff"}), "Optical Bench"]), "value": "sensor2"}
-                            ]
-                        ),
                         create_graph_card("humidity-graph", "Humidity (%)")
                     ]
                 )
@@ -370,7 +351,6 @@ def lasers_layout():
                     className="axis-header",
                     children=[
                         html.H3(f"{axis_name} Axis", className="axis-title"),
-                        # UPDATED: Removed the green/cyan status dot div from here
                     ]
                 ),
                 
@@ -468,7 +448,7 @@ def home_layout():
     return html.Div([
         
         # 1. Standard Header (Replaces the old 'System Nominal' bar)
-        create_header("System Status", "Overview of all laboratory subsystems", status_id="home-status-text"),
+        create_header("System Status", "Overview of all Subsystems", status_id="home-status-text"),
 
         # 2. Environmental Section (Tier 1)
         html.Div("Environmental Conditions", className="section-label"),
@@ -514,7 +494,7 @@ def home_layout():
         ),
 
         # 3. Lasers Section (Tier 2)
-        html.Div("Laser Position System", className="section-label"),
+        html.Div("Laser System", className="section-label"),
         html.Div(
             className="laser-grid",
             children=[
@@ -579,7 +559,7 @@ def home_layout():
         ),
 
         # 4. Photodiodes Section (Tier 3)
-        html.Div("Optical Output (Photodiodes)", className="section-label"),
+        html.Div("Photodiode Output", className="section-label"),
         html.Div(
             className="pd-home-grid",
             children=[
@@ -912,12 +892,10 @@ def navigate_pages(home_click, temp_click, laser_click, photodiode_click, data_c
      Output('temperature-graph', 'figure'),
      Output('humidity-graph', 'figure'),
      Output('connection-text', 'children')],
-    [Input('temp-humidity-interval', 'n_intervals'),
-     Input('temp-sensor-selector', 'value'),
-     Input('humidity-sensor-selector', 'value')],
+    [Input('temp-humidity-interval', 'n_intervals')],
     [State('current-page', 'data')]
 )
-def update_temp_humidity(n, temp_sensor, humidity_sensor, current_page):
+def update_temp_humidity(n, current_page):
     # Only update if we're on the temp humidity page
     if current_page != 'temp-humidity':
         raise PreventUpdate
@@ -964,24 +942,22 @@ def update_temp_humidity(n, temp_sensor, humidity_sensor, current_page):
         ),
     )
     
-    # Add temperature traces based on selection
-    if temp_sensor in ['both', 'sensor1']:
-        temp_fig.add_trace(go.Scatter(
-            x=plot_data['time_points'],
-            y=plot_data['temp1'],
-            mode='lines',
-            name='Ambient',
-            line=dict(color='#ff0000', width=2)
-        ))
+    # Always add both traces
+    temp_fig.add_trace(go.Scatter(
+        x=plot_data['time_points'],
+        y=plot_data['temp1'],
+        mode='lines',
+        name='Ambient',
+        line=dict(color='#ff0000', width=2)
+    ))
     
-    if temp_sensor in ['both', 'sensor2']:
-        temp_fig.add_trace(go.Scatter(
-            x=plot_data['time_points'],
-            y=plot_data['temp2'],
-            mode='lines',
-            name='Optical Bench',
-            line=dict(color='#00ffff', width=2)
-        ))
+    temp_fig.add_trace(go.Scatter(
+        x=plot_data['time_points'],
+        y=plot_data['temp2'],
+        mode='lines',
+        name='Optical Bench',
+        line=dict(color='#00ffff', width=2)
+    ))
     
     # Create humidity graph
     hum_fig = go.Figure()
@@ -1009,24 +985,22 @@ def update_temp_humidity(n, temp_sensor, humidity_sensor, current_page):
         ),
     )
     
-    # Add humidity traces based on selection
-    if humidity_sensor in ['both', 'sensor1']:
-        hum_fig.add_trace(go.Scatter(
-            x=plot_data['time_points'],
-            y=plot_data['humidity1'],
-            mode='lines',
-            name='Ambient',
-            line=dict(color='#ff0000', width=2)
-        ))
+    # Always add both traces
+    hum_fig.add_trace(go.Scatter(
+        x=plot_data['time_points'],
+        y=plot_data['humidity1'],
+        mode='lines',
+        name='Ambient',
+        line=dict(color='#ff0000', width=2)
+    ))
     
-    if humidity_sensor in ['both', 'sensor2']:
-        hum_fig.add_trace(go.Scatter(
-            x=plot_data['time_points'],
-            y=plot_data['humidity2'],
-            mode='lines',
-            name='Optical Bench',
-            line=dict(color='#00ffff', width=2)
-        ))
+    hum_fig.add_trace(go.Scatter(
+        x=plot_data['time_points'],
+        y=plot_data['humidity2'],
+        mode='lines',
+        name='Optical Bench',
+        line=dict(color='#00ffff', width=2)
+    ))
     
     return temp1, hum1, temp2, hum2, temp_fig, hum_fig, connection_text
 
