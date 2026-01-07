@@ -67,23 +67,30 @@ def design_string():
                 border-left: 3px solid #00ADB5;
             }
             
-            /* Icon Styling */
+            /* --- ICON STYLING (FIXED FOR VISIBILITY) --- */
             .sidebar .nav-link img {
-                width: 20px;
-                height: 20px;
-                margin-right: 12px;
-                filter: invert(1) grayscale(100%) brightness(1.5); 
-                opacity: 0.6; 
+                width: 24px;
+                height: 24px;
+                margin-right: 15px;
+                object-fit: contain;
+                
+                /* FORCE WHITE: Turns any colored/black icon into pure white */
+                filter: brightness(0) invert(1);
+                
+                opacity: 0.7; 
                 transition: all 0.2s;
             }
 
             .sidebar .nav-link:hover img { 
                 opacity: 1; 
-                filter: invert(1) grayscale(100%) brightness(2);
+                /* Keep white, just max opacity */
+                filter: brightness(0) invert(1);
             }
             
+            /* Active State: Teal Tint */
             .sidebar .nav-link.active img {
                 opacity: 1;
+                /* Complex filter to turn White into Teal (#00ADB5) */
                 filter: brightness(0) saturate(100%) invert(63%) sepia(60%) saturate(452%) hue-rotate(130deg) brightness(90%) contrast(93%);
             }
 
@@ -162,7 +169,139 @@ def design_string():
                 z-index: 10;
             }
             
-            /* --- INTEGRATED LASER MASTER CARDS --- */
+            /* --- HOME PAGE: MISSION CONTROL LAYOUT --- */
+            
+            /* Global Status Bar */
+            .global-status-bar {
+                background: #1e1e1e;
+                border: 1px solid #333;
+                border-left: 5px solid #00ADB5;
+                border-radius: 8px;
+                padding: 15px 25px;
+                margin-bottom: 25px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            }
+
+            .status-title {
+                font-size: 1.2rem;
+                font-weight: 600;
+                color: #fff;
+                margin: 0;
+            }
+
+            .status-summary {
+                color: #888;
+                font-size: 0.9rem;
+            }
+
+            /* Section Headers */
+            .section-label {
+                font-size: 0.9rem;
+                text-transform: uppercase;
+                letter-spacing: 1.5px;
+                color: #666;
+                margin-bottom: 15px;
+                border-bottom: 1px solid #333;
+                padding-bottom: 5px;
+                display: flex;
+                align-items: center;
+            }
+
+            /* Grids */
+            .env-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+
+            .laser-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+
+            .pd-home-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 15px;
+                margin-bottom: 30px;
+            }
+
+            /* Home Stat Card */
+            .home-stat-card {
+                background: #1e1e1e;
+                border: 1px solid #333;
+                border-radius: 8px;
+                padding: 20px;
+                position: relative;
+                transition: transform 0.2s;
+            }
+
+            .home-stat-card:hover {
+                transform: translateY(-2px);
+                border-color: #555;
+            }
+
+            .card-header-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 10px;
+            }
+
+            .card-title {
+                font-size: 0.9rem;
+                color: #aaa;
+                font-weight: 500;
+            }
+
+            .card-value {
+                font-size: 1.8rem;
+                font-weight: 700;
+                color: #e0e0e0;
+                line-height: 1.1;
+            }
+
+            .card-unit {
+                font-size: 0.8rem;
+                color: #666;
+                margin-left: 5px;
+            }
+
+            /* Status Dot */
+            .status-dot-large {
+                height: 12px;
+                width: 12px;
+                background-color: #00ADB5;
+                border-radius: 50%;
+                box-shadow: 0 0 8px rgba(0, 173, 181, 0.4);
+            }
+
+            .status-dot-large.warning {
+                background-color: #FF8A65;
+                box-shadow: 0 0 8px rgba(255, 138, 101, 0.4);
+            }
+
+            /* Sub-values */
+            .sub-metric-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 15px;
+                padding-top: 10px;
+                border-top: 1px solid rgba(255,255,255,0.05);
+            }
+
+            .sub-label { font-size: 0.8rem; color: #666; }
+            .sub-val { font-size: 1.1rem; font-weight: 600; color: #ccc; }
+            
+            
+            /* --- LASER PAGE: INTEGRATED MASTER CARDS --- */
             .integrated-axis-card {
                 background: #1e1e1e;
                 border: 1px solid #333;
@@ -213,11 +352,10 @@ def design_string():
                 font-weight: 500;
             }
 
-            /* CHANGED: Removed 'monospace' font family to match previous look */
+            /* Values use standard font now */
             .metric-value-large {
                 font-size: 2.2rem;
                 font-weight: 700;
-                /* font-family inherited from body */
             }
 
             .integrated-graph-container {
@@ -268,7 +406,7 @@ def design_string():
                 z-index: 1; 
             }
 
-            /* --- PHOTODIODE GRID --- */
+            /* --- PHOTODIODE PAGE: GRID --- */
             .pd-grid-container {
                 display: flex;
                 gap: 15px;
@@ -308,8 +446,7 @@ def design_string():
                 color: #ddd;
             }
 
-            /* --- CUSTOM RADIO BUTTONS --- */
-            
+            /* --- CUSTOM RADIO BUTTONS (Big & Teal) --- */
             #data-type-selector label {
                 display: inline-flex !important;
                 align-items: center;

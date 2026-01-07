@@ -65,42 +65,64 @@ def create_sidebar():
             html.Div(
                 className="nav-links",
                 children=[
+                    # --- 1. OVERVIEW (HOME) ---
+                    html.A(
+                        className="nav-link active", # Default active
+                        id="home-link",
+                        href="#",
+                        children=[
+                            # Make sure 'Home.svg' is exactly the name in your assets folder
+                            html.Img(src="assets/Home.svg", alt="Home"), 
+                            html.Span("Overview")
+                        ]
+                    ),
+                    
+                    # --- 2. TEMP & HUMIDITY ---
                     html.A(
                         className="nav-link",
                         id="temp-humidity-link",
                         href="#",
                         children=[
-                            html.Img(src="assets/Temperature.svg", alt="Temperature & Humidity"),
+                            # Assuming you have Temperature.svg
+                            html.Img(src="assets/Temperature.svg", alt="Temp"),
                             html.Span("Temperature & Humidity")
                         ]
                     ),
+                    
+                    # --- 3. LASERS ---
                     html.A(
                         className="nav-link",
                         id="laser-link",
                         href="#",
                         children=[
-                            html.Img(src="assets/Laser.svg", alt="Lasers"),
+                            # Assuming you have Laser.svg
+                            html.Img(src="assets/Laser.svg", alt="Laser"),
                             html.Span("Lasers")
                         ]
                     ),
+                    
+                    # --- 4. PHOTODIODES ---
                     html.A(
                         className="nav-link",
                         id="photodiode-link",
                         href="#",
                         children=[
-                            html.Img(src="assets/Photodiode.svg", alt="Photodiodes"),
+                            # Assuming you have Photodiode.svg
+                            html.Img(src="assets/Photodiode.svg", alt="PD"),
                             html.Span("Photodiodes")
                         ]
                     ),
                     
-                    html.Hr(style={'borderColor': 'rgba(0, 255, 255, 0.2)', 'margin': '15px 10px'}),
+                    html.Hr(style={'borderColor': 'rgba(255, 255, 255, 0.1)', 'margin': '15px 10px'}),
                     
+                    # --- 5. RETRIEVE DATA ---
                     html.A(
                         className="nav-link",
                         id="data-retrieval-link",
                         href="#",
                         children=[
-                            html.Img(src="assets/Download.svg", alt="Retrieve Data"),
+                            # Assuming you have Download.svg
+                            html.Img(src="assets/Download.svg", alt="Download"),
                             html.Span("Retrieve Data")
                         ]
                     ),
@@ -110,8 +132,11 @@ def create_sidebar():
         ]
     )
 
-def create_header(title, subtitle):
-    """Create a header component with title and subtitle."""
+def create_header(title, subtitle, status_id="connection-text"):
+    """
+    Create a header component.
+    Added 'status_id' parameter to prevent duplicate output errors on different pages.
+    """
     return html.Div(
         className="dashboard-header",
         children=[
@@ -122,7 +147,8 @@ def create_header(title, subtitle):
                 className="connection-status",
                 children=[
                     html.Span(className="status-indicator status-connected"),
-                    html.Span(id="connection-text", children=f"Connected | Last Update: {CURRENT_DATETIME}")
+                    # Use the dynamic ID here
+                    html.Span(id=status_id, children=f"Connected | Last Update: {CURRENT_DATETIME}")
                 ],
                 style={"textAlign": "right", "fontSize": "0.8rem"}
             )
@@ -452,6 +478,142 @@ def lasers_layout():
         )
     ])
 
+def home_layout():
+    """The Executive Summary Page."""
+    return html.Div([
+        
+        # Pass a UNIQUE ID ('home-status-text') to prevent conflict with other pages
+        create_header("System Status", "Overview of all laboratory subsystems", status_id="home-status-text"),
+
+        # ... (Rest of the layout remains exactly the same) ...
+        # 2. Environmental Section (Tier 1)
+        html.Div("Environmental Conditions", className="section-label"),
+        html.Div(
+            className="env-grid",
+            children=[
+                # ... (Keep existing code) ...
+                # Ambient Card
+                html.Div(
+                    className="home-stat-card",
+                    children=[
+                        html.Div(className="card-header-row", children=[
+                            html.Div("Ambient Lab", className="card-title"),
+                        ]),
+                        html.Div([
+                            html.Span(id="home-temp1", className="card-value", children="--.-"),
+                            html.Span(" °C", className="card-unit")
+                        ]),
+                        html.Div(className="sub-metric-row", children=[
+                            html.Span("Humidity", className="sub-label"),
+                            html.Span(id="home-hum1", className="sub-val", children="--.- %")
+                        ])
+                    ]
+                ),
+                # Optical Bench Card
+                html.Div(
+                    className="home-stat-card",
+                    children=[
+                        html.Div(className="card-header-row", children=[
+                            html.Div("Optical Bench", className="card-title"),
+                        ]),
+                        html.Div([
+                            html.Span(id="home-temp2", className="card-value", children="--.-"),
+                            html.Span(" °C", className="card-unit")
+                        ]),
+                        html.Div(className="sub-metric-row", children=[
+                            html.Span("Humidity", className="sub-label"),
+                            html.Span(id="home-hum2", className="sub-val", children="--.- %")
+                        ])
+                    ]
+                )
+            ]
+        ),
+        # ... (Keep Lasers and Photodiode sections as they were) ...
+        html.Div("Laser Position System", className="section-label"),
+        html.Div(
+            className="laser-grid",
+            children=[
+                # X Axis
+                html.Div(className="home-stat-card", children=[
+                    html.Div(className="card-header-row", children=[html.Div("X Axis", className="card-title")]),
+                    html.Div(className="sub-metric-row", style={"borderTop": "none", "marginTop": "0"}, children=[
+                        html.Span("X1", className="sub-label", style={"color": "#9eff00"}),
+                        html.Span(id="home-x1", className="sub-val", children="-.----")
+                    ]),
+                    html.Div(className="sub-metric-row", children=[
+                        html.Span("X2", className="sub-label", style={"color": "#00ADB5"}),
+                        html.Span(id="home-x2", className="sub-val", children="-.----")
+                    ])
+                ]),
+                # Y Axis
+                html.Div(className="home-stat-card", children=[
+                    html.Div(className="card-header-row", children=[html.Div("Y Axis", className="card-title")]),
+                    html.Div(className="sub-metric-row", style={"borderTop": "none", "marginTop": "0"}, children=[
+                        html.Span("Y1", className="sub-label", style={"color": "#9eff00"}),
+                        html.Span(id="home-y1", className="sub-val", children="-.----")
+                    ]),
+                    html.Div(className="sub-metric-row", children=[
+                        html.Span("Y2", className="sub-label", style={"color": "#00ADB5"}),
+                        html.Span(id="home-y2", className="sub-val", children="-.----")
+                    ])
+                ]),
+                # Z Axis
+                html.Div(className="home-stat-card", children=[
+                    html.Div(className="card-header-row", children=[html.Div("Z Axis", className="card-title")]),
+                    html.Div(className="sub-metric-row", style={"borderTop": "none", "marginTop": "0"}, children=[
+                        html.Span("Z1", className="sub-label", style={"color": "#9eff00"}),
+                        html.Span(id="home-z1", className="sub-val", children="-.----")
+                    ]),
+                    html.Div(className="sub-metric-row", children=[
+                        html.Span("Z2", className="sub-label", style={"color": "#00ADB5"}),
+                        html.Span(id="home-z2", className="sub-val", children="-.----")
+                    ])
+                ]),
+                # D Axis
+                html.Div(className="home-stat-card", children=[
+                    html.Div(className="card-header-row", children=[html.Div("D Axis", className="card-title")]),
+                    html.Div(className="sub-metric-row", style={"borderTop": "none", "marginTop": "0"}, children=[
+                        html.Span("D1", className="sub-label", style={"color": "#9eff00"}),
+                        html.Span(id="home-d1", className="sub-val", children="-.----")
+                    ]),
+                    html.Div(className="sub-metric-row", children=[
+                        html.Span("D2", className="sub-label", style={"color": "#00ADB5"}),
+                        html.Span(id="home-d2", className="sub-val", children="-.----")
+                    ])
+                ])
+            ]
+        ),
+
+        html.Div("Optical Output (Photodiodes)", className="section-label"),
+        html.Div(
+            className="pd-home-grid",
+            children=[
+                html.Div(className="home-stat-card", style={"padding": "15px"}, children=[
+                    html.Div("Fiber Output", className="card-title", style={"fontSize": "0.75rem", "marginBottom": "5px"}),
+                    html.Div(id="home-p1", className="card-value", style={"fontSize": "1.4rem"}, children="--"),
+                ]),
+                html.Div(className="home-stat-card", style={"padding": "15px"}, children=[
+                    html.Div("Grand Detection", className="card-title", style={"fontSize": "0.75rem", "marginBottom": "5px"}),
+                    html.Div(id="home-p2", className="card-value", style={"fontSize": "1.4rem"}, children="--"),
+                ]),
+                html.Div(className="home-stat-card", style={"padding": "15px"}, children=[
+                    html.Div("AOM 5", className="card-title", style={"fontSize": "0.75rem", "marginBottom": "5px"}),
+                    html.Div(id="home-p3", className="card-value", style={"fontSize": "1.4rem"}, children="--"),
+                ]),
+                html.Div(className="home-stat-card", style={"padding": "15px"}, children=[
+                    html.Div("AOM 3", className="card-title", style={"fontSize": "0.75rem", "marginBottom": "5px"}),
+                    html.Div(id="home-p4", className="card-value", style={"fontSize": "1.4rem"}, children="--"),
+                ]),
+                html.Div(className="home-stat-card", style={"padding": "15px"}, children=[
+                    html.Div("AOM 2", className="card-title", style={"fontSize": "0.75rem", "marginBottom": "5px"}),
+                    html.Div(id="home-p5", className="card-value", style={"fontSize": "1.4rem"}, children="--"),
+                ]),
+            ]
+        ),
+        
+        dcc.Interval(id='home-interval', interval=REFRESH_INTERVAL_SECONDS * 1000, n_intervals=0)
+    ])
+
 def photodiodes_layout():
     """Create the Photodiodes page layout."""
     return html.Div([
@@ -666,9 +828,10 @@ def data_retrieval_layout():
 
 
 # Define the main layout with URL routing
+# Define the main layout with URL routing
 app.layout = html.Div([
-    # Store current page
-    dcc.Store(id='current-page', data='temp-humidity'),
+    # Store current page - Initialize as 'home'
+    dcc.Store(id='current-page', data='home'),
     
     # Main components
     create_sidebar(),
@@ -676,7 +839,8 @@ app.layout = html.Div([
     html.Div(
         id="main-content",
         className="main-content",
-        children=[temp_humidity_layout()]
+        # Initialize with home_layout()
+        children=[home_layout()]
     )
 ])
 
@@ -702,36 +866,46 @@ def toggle_sidebar(n_clicks, current_class):
 @app.callback(
     [Output('main-content', 'children'),
      Output('current-page', 'data'),
+     Output('home-link', 'className'),          # ADDED THIS OUTPUT
      Output('temp-humidity-link', 'className'),
      Output('laser-link', 'className'),
      Output('photodiode-link', 'className'),
      Output('data-retrieval-link', 'className')],
-    [Input('temp-humidity-link', 'n_clicks'),
+    [Input('home-link', 'n_clicks'),            # ADDED THIS INPUT
+     Input('temp-humidity-link', 'n_clicks'),
      Input('laser-link', 'n_clicks'),
      Input('photodiode-link', 'n_clicks'),
      Input('data-retrieval-link', 'n_clicks')],
     [State('current-page', 'data')]
 )
-def navigate_pages(temp_click, laser_click, photodiode_click, data_click, current_page):
+def navigate_pages(home_click, temp_click, laser_click, photodiode_click, data_click, current_page):
     ctx = callback_context
     
+    # Default State (Home Page Active)
+    default_return = (home_layout(), 'home', 'nav-link active', 'nav-link', 'nav-link', 'nav-link', 'nav-link')
+
     if not ctx.triggered:
-        # Default page
-        return temp_humidity_layout(), 'temp-humidity', 'nav-link active', 'nav-link', 'nav-link', 'nav-link'
+        return default_return
     
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
     
-    if button_id == 'temp-humidity-link':
-        return temp_humidity_layout(), 'temp-humidity', 'nav-link active', 'nav-link', 'nav-link', 'nav-link'
+    # Reset all classes
+    inactive = 'nav-link'
+    active = 'nav-link active'
+
+    if button_id == 'home-link':
+        return home_layout(), 'home', active, inactive, inactive, inactive, inactive
+    elif button_id == 'temp-humidity-link':
+        return temp_humidity_layout(), 'temp-humidity', inactive, active, inactive, inactive, inactive
     elif button_id == 'laser-link':
-        return lasers_layout(), 'lasers', 'nav-link', 'nav-link active', 'nav-link', 'nav-link'
+        return lasers_layout(), 'lasers', inactive, inactive, active, inactive, inactive
     elif button_id == 'photodiode-link':
-        return photodiodes_layout(), 'photodiodes', 'nav-link', 'nav-link', 'nav-link active', 'nav-link'
+        return photodiodes_layout(), 'photodiodes', inactive, inactive, inactive, active, inactive
     elif button_id == 'data-retrieval-link':
-        return data_retrieval_layout(), 'data-retrieval', 'nav-link', 'nav-link', 'nav-link', 'nav-link active'
+        return data_retrieval_layout(), 'data-retrieval', inactive, inactive, inactive, inactive, active
     
-    # Fallback
-    return temp_humidity_layout(), 'temp-humidity', 'nav-link active', 'nav-link', 'nav-link', 'nav-link'
+    return default_return
+
 
 # Temperature & Humidity callbacks
 @app.callback(
@@ -859,6 +1033,61 @@ def update_temp_humidity(n, temp_sensor, humidity_sensor, current_page):
         ))
     
     return temp1, hum1, temp2, hum2, temp_fig, hum_fig, connection_text
+
+
+@app.callback(
+    [Output('home-temp1', 'children'), Output('home-hum1', 'children'),
+     Output('home-temp2', 'children'), Output('home-hum2', 'children'),
+     Output('home-x1', 'children'), Output('home-x2', 'children'),
+     Output('home-y1', 'children'), Output('home-y2', 'children'),
+     Output('home-z1', 'children'), Output('home-z2', 'children'),
+     Output('home-d1', 'children'), Output('home-d2', 'children'),
+     Output('home-p1', 'children'), Output('home-p2', 'children'),
+     Output('home-p3', 'children'), Output('home-p4', 'children'),
+     Output('home-p5', 'children'), 
+     # CHANGED THIS LINE: Targeting the new unique ID
+     Output('home-status-text', 'children')],
+    [Input('home-interval', 'n_intervals')],
+    [State('current-page', 'data')]
+)
+def update_home_dashboard(n, current_page):
+    # ... (Keep the rest of your function logic exactly the same) ...
+    if current_page != 'home':
+        raise PreventUpdate
+
+    now = datetime.now()
+    date_str = now.strftime("%d %B, %Y").lstrip('0') 
+    time_str = now.strftime("%H:%M:%S")
+    header_status = f"{date_str} | {time_str}"
+
+    # ... (Fetching data logic remains same) ...
+    # 1. Get Temp Data
+    t_data = get_latest_temp_humidity(os.path.join(DATASET_BASE_DIR, 'Temp_Humidity_data'))
+    t1 = f"{t_data['temp1']:.2f}" if t_data else "--"
+    h1 = f"{t_data['humidity1']:.1f}%" if t_data else "--"
+    t2 = f"{t_data['temp2']:.2f}" if t_data else "--"
+    h2 = f"{t_data['humidity2']:.1f}%" if t_data else "--"
+
+    # 2. Get Laser Data
+    l_data = get_latest_laser(os.path.join(DATASET_BASE_DIR, 'Lasers_data'))
+    x1 = f"{l_data['X1']:.4f}" if l_data else "--"
+    x2 = f"{l_data['X2']:.4f}" if l_data else "--"
+    y1 = f"{l_data['Y1']:.4f}" if l_data else "--"
+    y2 = f"{l_data['Y2']:.4f}" if l_data else "--"
+    z1 = f"{l_data['Z1']:.4f}" if l_data else "--"
+    z2 = f"{l_data['Z2']:.4f}" if l_data else "--"
+    d1 = f"{l_data['D1']:.4f}" if l_data else "--"
+    d2 = f"{l_data['D2']:.4f}" if l_data else "--"
+
+    # 3. Get Photodiode Data
+    p_data = get_latest_photodiode(os.path.join(DATASET_BASE_DIR, 'Photodiode_data'))
+    p1 = f"{p_data.get('P1', 0):.2f}" if p_data else "--"
+    p2 = f"{p_data.get('P2', 0):.2f}" if p_data else "--"
+    p3 = f"{p_data.get('P3', 0):.2f}" if p_data else "--"
+    p4 = f"{p_data.get('P4', 0):.2f}" if p_data else "--"
+    p5 = f"{p_data.get('P5', 0):.2f}" if p_data else "--"
+
+    return (t1, h1, t2, h2, x1, x2, y1, y2, z1, z2, d1, d2, p1, p2, p3, p4, p5, header_status)
 
 # Lasers callbacks
 @app.callback(
