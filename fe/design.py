@@ -150,7 +150,7 @@ def design_string():
                 font-weight: 400;
             }
 
-            /* --- CARD STYLING --- */
+            /* --- STANDARD CARD STYLING --- */
             .sensor-card {
                 background: #1e1e1e;
                 border: 1px solid #333;
@@ -162,13 +162,76 @@ def design_string():
                 z-index: 10;
             }
             
-            /* Typography */
+            /* --- INTEGRATED LASER MASTER CARDS --- */
+            .integrated-axis-card {
+                background: #1e1e1e;
+                border: 1px solid #333;
+                border-radius: 12px;
+                padding: 0; 
+                margin-bottom: 20px;
+                overflow: hidden;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+
+            .axis-header {
+                background: rgba(255, 255, 255, 0.03);
+                padding: 15px 20px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .axis-title {
+                color: #e0e0e0;
+                font-size: 1.1rem;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                margin: 0;
+            }
+
+            .axis-values-container {
+                padding: 20px;
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .single-metric {
+                text-align: center;
+            }
+
+            .metric-label {
+                font-size: 0.85rem;
+                color: #888;
+                text-transform: uppercase;
+                margin-bottom: 5px;
+                font-weight: 500;
+            }
+
+            /* CHANGED: Removed 'monospace' font family to match previous look */
+            .metric-value-large {
+                font-size: 2.2rem;
+                font-weight: 700;
+                /* font-family inherited from body */
+            }
+
+            .integrated-graph-container {
+                padding: 10px;
+                background: rgba(0,0,0,0.2);
+                flex-grow: 1;
+            }
+            
+            /* --- TYPOGRAPHY & VALUES --- */
             .sensor-card h3, .control-label, .pd-label {
                 color: #aaaaaa !important; 
                 font-weight: 500;
                 letter-spacing: 0.5px;
             }
-            
 
             .value-display {
                 font-size: 2.2rem;
@@ -245,9 +308,8 @@ def design_string():
                 color: #ddd;
             }
 
-            /* --- CUSTOM RADIO BUTTONS (Big & Teal) --- */
+            /* --- CUSTOM RADIO BUTTONS --- */
             
-            /* 1. The Container (Label) */
             #data-type-selector label {
                 display: inline-flex !important;
                 align-items: center;
@@ -255,31 +317,22 @@ def design_string():
                 cursor: pointer;
                 font-weight: 400;
                 color: #e0e0e0;
-                
-                /* BIG HIT AREA: Adds invisible padding so you can click near it */
                 padding: 8px 12px;
                 border-radius: 8px;
                 transition: background 0.2s;
             }
             
-            /* Subtle hover effect on the text label area */
             #data-type-selector label:hover {
                 background: rgba(255, 255, 255, 0.05);
             }
             
-            /* 2. The Input (The Circle) */
             #data-type-selector input {
-                /* Reset default appearance */
                 appearance: none;
                 -webkit-appearance: none;
-                
-                /* Size & Shape */
                 width: 20px;
                 height: 20px;
                 border-radius: 50%;
-                
-                /* Default State (Unchecked) */
-                border: 2px solid #666; /* Grey border */
+                border: 2px solid #666; 
                 background-color: transparent;
                 margin-right: 12px;
                 cursor: pointer;
@@ -287,17 +340,13 @@ def design_string():
                 transition: all 0.2s ease;
             }
             
-            /* Hover State for the circle */
             #data-type-selector input:hover {
                 border-color: #00ADB5;
             }
             
-            /* 3. The Checked State (Teal Dot) */
             #data-type-selector input:checked {
                 border-color: #00ADB5;
                 background-color: #00ADB5;
-                /* This creates the "gap" between the dot and the ring.
-                   It forces an inner shadow matching the card background (#1e1e1e) */
                 box-shadow: inset 0 0 0 4px #1e1e1e;
             }
 

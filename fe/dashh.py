@@ -349,211 +349,105 @@ def temp_humidity_layout():
     ])
 
 def lasers_layout():
-    """Create the Lasers page layout."""
+    """Create the Lasers page layout with Integrated Instrument Clusters."""
+    
+    # Helper to generate the card structure to keep code clean
+    def create_axis_card(axis_name, label1, id1, color1, label2, id2, color2, graph_id):
+        return html.Div(
+            className="integrated-axis-card",
+            children=[
+                # 1. Header Row
+                html.Div(
+                    className="axis-header",
+                    children=[
+                        html.H3(f"{axis_name} Axis", className="axis-title"),
+                        # Optional: Add a small status dot or icon here if needed
+                        html.Div(style={"width": "10px", "height": "10px", "borderRadius": "50%", "background": "#00ADB5"}) 
+                    ]
+                ),
+                
+                # 2. Big Data Row
+                html.Div(
+                    className="axis-values-container",
+                    children=[
+                        # Metric 1
+                        html.Div(
+                            className="single-metric",
+                            children=[
+                                html.Div(label1, className="metric-label", style={"color": color1}), # Colored Label
+                                html.Div(
+                                    id=id1, 
+                                    className="metric-value-large",
+                                    style={"color": color1}, # Colored Value
+                                    children="-.----"
+                                )
+                            ]
+                        ),
+                        
+                        # Vertical Divider
+                        html.Div(style={"width": "1px", "height": "40px", "background": "rgba(255,255,255,0.1)"}),
+                        
+                        # Metric 2
+                        html.Div(
+                            className="single-metric",
+                            children=[
+                                html.Div(label2, className="metric-label", style={"color": color2}), # Colored Label
+                                html.Div(
+                                    id=id2, 
+                                    className="metric-value-large", 
+                                    style={"color": color2}, # Colored Value
+                                    children="-.----"
+                                )
+                            ]
+                        )
+                    ]
+                ),
+                
+                # 3. The Graph (Integrated)
+                html.Div(
+                    className="integrated-graph-container",
+                    children=[
+                        dcc.Graph(
+                            id=graph_id,
+                            config={'displayModeBar': False},
+                            style={"height": "250px", "width": "100%"}
+                        )
+                    ]
+                )
+            ]
+        )
+
+    # --- MAIN LAYOUT ---
     return html.Div([
         create_header("Lasers", "Real-time Laser Monitoring"),
         
-        # Current Values Section - X and Y Axis
+        # Grid Container (2 Columns on large screens)
         html.Div(
-            style={"display": "flex", "flexWrap": "wrap", "justifyContent": "space-around"},
+            style={
+                "display": "grid", 
+                "gridTemplateColumns": "repeat(auto-fit, minmax(500px, 1fr))", # Auto-fit ensures responsiveness
+                "gap": "25px",
+                "padding": "0 20px"
+            },
             children=[
-                html.Div(
-                    className="sensor-card",
-                    style={"flex": "1", "minWidth": "300px", "border": "1px solid rgba(0, 255, 255, 0.1)"},
-                    children=[
-                        html.H3("X Axis", style={"textAlign": "center", "color": "#ffffff"}),
-                        html.Div(
-                            style={"display": "flex", "justifyContent": "space-around"},
-                            children=[
-                                html.Div(
-                                    style={"textAlign": "center"},
-                                    children=[
-                                        html.Div("X1", style={"color": "#9eff00", "marginBottom": "5px"}),
-                                        html.Div(
-                                            id="x1-value",
-                                            className="value-display",
-                                            style={"color": "#9eff00", "fontSize": "2rem"},
-                                            children="-.----"
-                                        )
-                                    ]
-                                ),
-                                html.Div(
-                                    style={"textAlign": "center"},
-                                    children=[
-                                        html.Div("X2", style={"color": "#00ffff", "marginBottom": "5px"}),
-                                        html.Div(
-                                            id="x2-value",
-                                            className="value-display",
-                                            style={"color": "#00ffff", "fontSize": "2rem"},
-                                            children="-.----"
-                                        )
-                                    ]
-                                )
-                            ]
-                        )
-                    ]
-                ),
+                # X Axis Card
+                create_axis_card("X", "X1", "x1-value", "#9eff00", "X2", "x2-value", "#00ADB5", "x-axis-graph"),
                 
-                html.Div(
-                    className="sensor-card",
-                    style={"flex": "1", "minWidth": "300px", "border": "1px solid rgba(0, 255, 255, 0.1)"},
-                    children=[
-                        html.H3("Y Axis", style={"textAlign": "center", "color": "#ffffff"}),
-                        html.Div(
-                            style={"display": "flex", "justifyContent": "space-around"},
-                            children=[
-                                html.Div(
-                                    style={"textAlign": "center"},
-                                    children=[
-                                        html.Div("Y1", style={"color": "#9eff00", "marginBottom": "5px"}),
-                                        html.Div(
-                                            id="y1-value",
-                                            className="value-display",
-                                            style={"color": "#9eff00", "fontSize": "2rem"},
-                                            children="-.----"
-                                        )
-                                    ]
-                                ),
-                                html.Div(
-                                    style={"textAlign": "center"},
-                                    children=[
-                                        html.Div("Y2", style={"color": "#00ffff", "marginBottom": "5px"}),
-                                        html.Div(
-                                            id="y2-value",
-                                            className="value-display",
-                                            style={"color": "#00ffff", "fontSize": "2rem"},
-                                            children="-.----"
-                                        )
-                                    ]
-                                )
-                            ]
-                        )
-                    ]
-                ),
-            ]
-        ),
-        
-        # Current Values Section - Z and D Axis
-        html.Div(
-            style={"display": "flex", "flexWrap": "wrap", "justifyContent": "space-around", "marginTop": "20px"},
-            children=[
-                html.Div(
-                    className="sensor-card",
-                    style={"flex": "1", "minWidth": "300px", "border": "1px solid rgba(0, 255, 255, 0.1)"},
-                    children=[
-                        html.H3("Z Axis", style={"textAlign": "center", "color": "#ffffff"}),
-                        html.Div(
-                            style={"display": "flex", "justifyContent": "space-around"},
-                            children=[
-                                html.Div(
-                                    style={"textAlign": "center"},
-                                    children=[
-                                        html.Div("Z1", style={"color": "#9eff00", "marginBottom": "5px"}),
-                                        html.Div(
-                                            id="z1-value",
-                                            className="value-display",
-                                            style={"color": "#9eff00", "fontSize": "2rem"},
-                                            children="-.----"
-                                        )
-                                    ]
-                                ),
-                                html.Div(
-                                    style={"textAlign": "center"},
-                                    children=[
-                                        html.Div("Z2", style={"color": "#00ffff", "marginBottom": "5px"}),
-                                        html.Div(
-                                            id="z2-value",
-                                            className="value-display",
-                                            style={"color": "#00ffff", "fontSize": "2rem"},
-                                            children="-.----"
-                                        )
-                                    ]
-                                )
-                            ]
-                        )
-                    ]
-                ),
+                # Y Axis Card
+                create_axis_card("Y", "Y1", "y1-value", "#9eff00", "Y2", "y2-value", "#00ADB5", "y-axis-graph"),
                 
-                html.Div(
-                    className="sensor-card",
-                    style={"flex": "1", "minWidth": "300px", "border": "1px solid rgba(0, 255, 255, 0.1)"},
-                    children=[
-                        html.H3("D Axis", style={"textAlign": "center", "color": "#ffffff"}),
-                        html.Div(
-                            style={"display": "flex", "justifyContent": "space-around"},
-                            children=[
-                                html.Div(
-                                    style={"textAlign": "center"},
-                                    children=[
-                                        html.Div("D1", style={"color": "#9eff00", "marginBottom": "5px"}),
-                                        html.Div(
-                                            id="d1-value",
-                                            className="value-display",
-                                            style={"color": "#9eff00", "fontSize": "2rem"},
-                                            children="-.----"
-                                        )
-                                    ]
-                                ),
-                                html.Div(
-                                    style={"textAlign": "center"},
-                                    children=[
-                                        html.Div("D2", style={"color": "#00ffff", "marginBottom": "5px"}),
-                                        html.Div(
-                                            id="d2-value",
-                                            className="value-display",
-                                            style={"color": "#00ffff", "fontSize": "2rem"},
-                                            children="-.----"
-                                        )
-                                    ]
-                                )
-                            ]
-                        )
-                    ]
-                ),
+                # Z Axis Card
+                create_axis_card("Z", "Z1", "z1-value", "#9eff00", "Z2", "z2-value", "#00ADB5", "z-axis-graph"),
+                
+                # D Axis Card
+                create_axis_card("D", "D1", "d1-value", "#9eff00", "D2", "d2-value", "#00ADB5", "d-axis-graph"),
             ]
         ),
         
-        # Graphs Section
-        html.Div(
-            style={"display": "flex", "flexWrap": "wrap", "marginTop": "20px"},
-            children=[
-                html.Div(
-                    style={"flex": "1 1 50%", "minWidth": "400px"},
-                    children=[
-                        create_graph_card("x-axis-graph", "X-Axis Laser Readings")
-                    ]
-                ),
-                html.Div(
-                    style={"flex": "1 1 50%", "minWidth": "400px"},
-                    children=[
-                        create_graph_card("y-axis-graph", "Y-Axis Laser Readings")
-                    ]
-                ),
-            ]
-        ),
-        
-        html.Div(
-            style={"display": "flex", "flexWrap": "wrap", "marginTop": "20px"},
-            children=[
-                html.Div(
-                    style={"flex": "1 1 50%", "minWidth": "400px"},
-                    children=[
-                        create_graph_card("z-axis-graph", "Z-Axis Laser Readings")
-                    ]
-                ),
-                html.Div(
-                    style={"flex": "1 1 50%", "minWidth": "400px"},
-                    children=[
-                        create_graph_card("d-axis-graph", "D-Axis Laser Readings")
-                    ]
-                ),
-            ]
-        ),
-        
-        # Refresh interval component (hidden)
+        # Keep interval hidden
         dcc.Interval(
             id='lasers-interval',
-            interval=REFRESH_INTERVAL_SECONDS * 1000,  # in milliseconds
+            interval=REFRESH_INTERVAL_SECONDS * 1000,
             n_intervals=0
         )
     ])
