@@ -144,17 +144,15 @@ def design_string():
                 font-size: 2rem;
             }
             
-            /* CHANGED: Subtitles to #B0BEC5 (Blue-Grey) */
             .header-subtitle {
                 color: #B0BEC5; 
                 margin: 5px 0 0 0;
                 font-weight: 400;
             }
 
-            /* --- CARD STYLING (UPDATED) --- */
+            /* --- CARD STYLING --- */
             .sensor-card {
                 background: #1e1e1e;
-                /* NEW: Solid 1px border #333333 */
                 border: 1px solid #333333;
                 border-radius: 8px;
                 padding: 25px;
@@ -167,7 +165,7 @@ def design_string():
             /* --- HOME PAGE LAYOUT --- */
             .global-status-bar {
                 background: #1e1e1e;
-                border: 1px solid #333333; /* Updated Border */
+                border: 1px solid #333333;
                 border-left: 5px solid #00ADB5;
                 border-radius: 8px;
                 padding: 15px 25px;
@@ -208,7 +206,7 @@ def design_string():
 
             .home-stat-card {
                 background: #1e1e1e;
-                border: 1px solid #333333; /* Updated Border */
+                border: 1px solid #333333;
                 border-radius: 8px;
                 padding: 20px;
                 position: relative;
@@ -240,14 +238,12 @@ def design_string():
                 line-height: 1.1;
             }
 
-            /* CHANGED: Card Unit to #B0BEC5 (Blue-Grey) */
             .card-unit {
                 font-size: 0.8rem;
                 color: #B0BEC5;
                 margin-left: 5px;
             }
 
-            /* Sub-values */
             .sub-metric-row {
                 display: flex;
                 justify-content: space-between;
@@ -257,7 +253,6 @@ def design_string():
                 border-top: 1px solid rgba(255,255,255,0.05);
             }
 
-            /* CHANGED: Sub label to #B0BEC5 (Blue-Grey) */
             .sub-label { font-size: 0.8rem; color: #B0BEC5; }
             .sub-val { font-size: 1.1rem; font-weight: 600; color: #ccc; }
             
@@ -265,7 +260,7 @@ def design_string():
             /* --- INTEGRATED AXIS CARD --- */
             .integrated-axis-card {
                 background: #1e1e1e;
-                border: 1px solid #333333; /* Updated Border */
+                border: 1px solid #333333;
                 border-radius: 12px;
                 padding: 0; 
                 margin-bottom: 20px;
@@ -303,7 +298,6 @@ def design_string():
 
             .single-metric { text-align: center; }
 
-            /* CHANGED: Metric Label to #B0BEC5 */
             .metric-label {
                 font-size: 0.85rem;
                 color: #B0BEC5;
@@ -323,7 +317,7 @@ def design_string():
                 flex-grow: 1;
             }
             
-            /* --- TYPOGRAPHY & VALUES (UPDATED COLORS) --- */
+            /* --- TYPOGRAPHY & VALUES --- */
             .sensor-card h3, .control-label, .pd-label {
                 color: #aaaaaa !important; 
                 font-weight: 500;
@@ -337,10 +331,10 @@ def design_string():
                 margin: 8px 0;
             }
 
-            /* NEW COLORS */
-            .temp-value { color: #FFB74D !important; } /* Soft Orange */
-            .humidity-value { color: #4DD0E1 !important; } /* Muted Cyan */
-            .no-data-value { color: #9E9E9E; font-style: italic; } /* Medium Grey */
+            /* CHANGED: Forced values to White */
+            .temp-value { color: #ffffff !important; } 
+            .humidity-value { color: #ffffff !important; }
+            .no-data-value { color: #9E9E9E; font-style: italic; }
 
             /* Status Indicators */
             .status-indicator {
@@ -351,7 +345,7 @@ def design_string():
                 margin-right: 8px;
             }
             .status-connected { background-color: #00ADB5; }
-            .status-error { background-color: #EF5350; } /* Matte Red */
+            .status-error { background-color: #EF5350; } 
             
             .connection-status { color: #666; font-family: monospace; }
 
@@ -361,7 +355,7 @@ def design_string():
                 border-radius: 8px;
                 padding: 20px;
                 margin: 20px;
-                border: 1px solid #333333; /* Updated Border */
+                border: 1px solid #333333; 
                 position: relative;
                 z-index: 1; 
             }
@@ -377,7 +371,7 @@ def design_string():
             .pd-stat-button {
                 flex: 1;
                 background: #252525;
-                border: 1px solid #333333; /* Updated Border */
+                border: 1px solid #333333; 
                 border-radius: 6px;
                 padding: 15px 10px;
                 cursor: pointer;
@@ -447,9 +441,9 @@ def design_string():
                 box-shadow: inset 0 0 0 4px #1e1e1e;
             }
 
-            /* --- DATE PICKER REPAIR & UPDATES --- */
+            /* --- DATE PICKER REPAIR --- */
             .SingleDatePickerInput {
-                background-color: #2C2C2C !important; /* Lighter background for inputs */
+                background-color: #2C2C2C !important;
                 border: 1px solid #444 !important;
                 border-radius: 4px;
                 display: flex;
@@ -471,7 +465,6 @@ def design_string():
                 line-height: normal;
             }
 
-            /* Changed placeholder text to #9E9E9E */
             .DateInput_input::placeholder {
                 color: #9E9E9E; 
             }

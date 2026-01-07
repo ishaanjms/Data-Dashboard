@@ -32,8 +32,8 @@ MAX_POINTS = 50
 CURRENT_DATETIME = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # --- COLOR PALETTE DEFINITION ---
-COLOR_PRIMARY = "#00ADB5"  # Teal (Cool)
-COLOR_SECONDARY = "#FFCA28" # Amber (Warm)
+COLOR_PRIMARY = "#00ADB5"  # Teal (Cool) - Used for Series 2
+COLOR_SECONDARY = "#00B582" # Green (New) - Used for Series 1
 
 # Initialize the app
 app = dash.Dash(
@@ -403,7 +403,7 @@ def lasers_layout():
                 "padding": "0 20px"
             },
             children=[
-                # X Axis Card - Using COLOR_SECONDARY (Amber) instead of Green
+                # X Axis Card - Using COLOR_SECONDARY (New Green)
                 create_axis_card("X", "X1", "x1-value", COLOR_SECONDARY, "X2", "x2-value", COLOR_PRIMARY, "x-axis-graph"),
                 
                 # Y Axis Card
@@ -488,7 +488,7 @@ def home_layout():
                     html.Div(className="card-header-row", children=[
                         html.Div("X Axis", className="card-title"),
                     ]),
-                    # Using COLOR_SECONDARY (Amber)
+                    # Using COLOR_SECONDARY (New Green)
                     html.Div(className="sub-metric-row", style={"borderTop": "none", "marginTop": "0"}, children=[
                         html.Span("X1", className="sub-label", style={"color": COLOR_SECONDARY}),
                         html.Span(id="home-x1", className="sub-val", children="-.--")
@@ -549,23 +549,23 @@ def home_layout():
             className="pd-home-grid",
             children=[
                 html.Div(className="home-stat-card", style={"padding": "15px"}, children=[
-                    html.Div("Fiber Output", className="card-title", style={"fontSize": "0.75rem", "marginBottom": "5px"}),
+                    html.Div("Fiber Output", className="card-title", style={"fontSize": "0.75rem", "marginBottom": "5px", "color": COLOR_SECONDARY}),
                     html.Div(id="home-p1", className="card-value", style={"fontSize": "1.4rem"}, children="--"),
                 ]),
                 html.Div(className="home-stat-card", style={"padding": "15px"}, children=[
-                    html.Div("Grand Detection", className="card-title", style={"fontSize": "0.75rem", "marginBottom": "5px"}),
+                    html.Div("Grand Detection", className="card-title", style={"fontSize": "0.75rem", "marginBottom": "5px", "color": COLOR_PRIMARY}),
                     html.Div(id="home-p2", className="card-value", style={"fontSize": "1.4rem"}, children="--"),
                 ]),
                 html.Div(className="home-stat-card", style={"padding": "15px"}, children=[
-                    html.Div("AOM 5", className="card-title", style={"fontSize": "0.75rem", "marginBottom": "5px"}),
+                    html.Div("AOM 5", className="card-title", style={"fontSize": "0.75rem", "marginBottom": "5px", "color": "#ff9900"}),
                     html.Div(id="home-p3", className="card-value", style={"fontSize": "1.4rem"}, children="--"),
                 ]),
                 html.Div(className="home-stat-card", style={"padding": "15px"}, children=[
-                    html.Div("AOM 3", className="card-title", style={"fontSize": "0.75rem", "marginBottom": "5px"}),
+                    html.Div("AOM 3", className="card-title", style={"fontSize": "0.75rem", "marginBottom": "5px", "color": "#CE93D8"}),
                     html.Div(id="home-p4", className="card-value", style={"fontSize": "1.4rem"}, children="--"),
                 ]),
                 html.Div(className="home-stat-card", style={"padding": "15px"}, children=[
-                    html.Div("AOM 2", className="card-title", style={"fontSize": "0.75rem", "marginBottom": "5px"}),
+                    html.Div("AOM 2", className="card-title", style={"fontSize": "0.75rem", "marginBottom": "5px", "color": "#90CAF9"}),
                     html.Div(id="home-p5", className="card-value", style={"fontSize": "1.4rem"}, children="--"),
                 ]),
             ]
