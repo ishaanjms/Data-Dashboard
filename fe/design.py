@@ -67,30 +67,24 @@ def design_string():
                 border-left: 3px solid #00ADB5;
             }
             
-            /* --- ICON STYLING (FIXED FOR VISIBILITY) --- */
+            /* Icon Styling */
             .sidebar .nav-link img {
                 width: 24px;
                 height: 24px;
                 margin-right: 15px;
                 object-fit: contain;
-                
-                /* FORCE WHITE: Turns any colored/black icon into pure white */
                 filter: brightness(0) invert(1);
-                
                 opacity: 0.7; 
                 transition: all 0.2s;
             }
 
             .sidebar .nav-link:hover img { 
                 opacity: 1; 
-                /* Keep white, just max opacity */
                 filter: brightness(0) invert(1);
             }
             
-            /* Active State: Teal Tint */
             .sidebar .nav-link.active img {
                 opacity: 1;
-                /* Complex filter to turn White into Teal (#00ADB5) */
                 filter: brightness(0) saturate(100%) invert(63%) sepia(60%) saturate(452%) hue-rotate(130deg) brightness(90%) contrast(93%);
             }
 
@@ -101,7 +95,6 @@ def design_string():
                 letter-spacing: 1px;
             }
 
-            /* --- TOGGLE BUTTON --- */
             .sidebar-toggle {
                 position: absolute;
                 right: -12px;
@@ -151,16 +144,18 @@ def design_string():
                 font-size: 2rem;
             }
             
+            /* CHANGED: Subtitles to #B0BEC5 (Blue-Grey) */
             .header-subtitle {
-                color: #888888;
+                color: #B0BEC5; 
                 margin: 5px 0 0 0;
                 font-weight: 400;
             }
 
-            /* --- STANDARD CARD STYLING --- */
+            /* --- CARD STYLING (UPDATED) --- */
             .sensor-card {
                 background: #1e1e1e;
-                border: 1px solid #333;
+                /* NEW: Solid 1px border #333333 */
+                border: 1px solid #333333;
                 border-radius: 8px;
                 padding: 25px;
                 margin: 15px;
@@ -169,12 +164,10 @@ def design_string():
                 z-index: 10;
             }
             
-            /* --- HOME PAGE: MISSION CONTROL LAYOUT --- */
-            
-            /* Global Status Bar */
+            /* --- HOME PAGE LAYOUT --- */
             .global-status-bar {
                 background: #1e1e1e;
-                border: 1px solid #333;
+                border: 1px solid #333333; /* Updated Border */
                 border-left: 5px solid #00ADB5;
                 border-radius: 8px;
                 padding: 15px 25px;
@@ -197,7 +190,6 @@ def design_string():
                 font-size: 0.9rem;
             }
 
-            /* Section Headers */
             .section-label {
                 font-size: 0.9rem;
                 text-transform: uppercase;
@@ -210,32 +202,13 @@ def design_string():
                 align-items: center;
             }
 
-            /* Grids */
-            .env-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 20px;
-                margin-bottom: 30px;
-            }
+            .env-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+            .laser-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+            .pd-home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px; }
 
-            .laser-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 20px;
-                margin-bottom: 30px;
-            }
-
-            .pd-home-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                gap: 15px;
-                margin-bottom: 30px;
-            }
-
-            /* Home Stat Card */
             .home-stat-card {
                 background: #1e1e1e;
-                border: 1px solid #333;
+                border: 1px solid #333333; /* Updated Border */
                 border-radius: 8px;
                 padding: 20px;
                 position: relative;
@@ -267,24 +240,11 @@ def design_string():
                 line-height: 1.1;
             }
 
+            /* CHANGED: Card Unit to #B0BEC5 (Blue-Grey) */
             .card-unit {
                 font-size: 0.8rem;
-                color: #666;
+                color: #B0BEC5;
                 margin-left: 5px;
-            }
-
-            /* Status Dot */
-            .status-dot-large {
-                height: 12px;
-                width: 12px;
-                background-color: #00ADB5;
-                border-radius: 50%;
-                box-shadow: 0 0 8px rgba(0, 173, 181, 0.4);
-            }
-
-            .status-dot-large.warning {
-                background-color: #FF8A65;
-                box-shadow: 0 0 8px rgba(255, 138, 101, 0.4);
             }
 
             /* Sub-values */
@@ -297,14 +257,15 @@ def design_string():
                 border-top: 1px solid rgba(255,255,255,0.05);
             }
 
-            .sub-label { font-size: 0.8rem; color: #666; }
+            /* CHANGED: Sub label to #B0BEC5 (Blue-Grey) */
+            .sub-label { font-size: 0.8rem; color: #B0BEC5; }
             .sub-val { font-size: 1.1rem; font-weight: 600; color: #ccc; }
             
             
-            /* --- LASER PAGE: INTEGRATED MASTER CARDS --- */
+            /* --- INTEGRATED AXIS CARD --- */
             .integrated-axis-card {
                 background: #1e1e1e;
-                border: 1px solid #333;
+                border: 1px solid #333333; /* Updated Border */
                 border-radius: 12px;
                 padding: 0; 
                 margin-bottom: 20px;
@@ -340,19 +301,17 @@ def design_string():
                 border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             }
 
-            .single-metric {
-                text-align: center;
-            }
+            .single-metric { text-align: center; }
 
+            /* CHANGED: Metric Label to #B0BEC5 */
             .metric-label {
                 font-size: 0.85rem;
-                color: #888;
+                color: #B0BEC5;
                 text-transform: uppercase;
                 margin-bottom: 5px;
                 font-weight: 500;
             }
 
-            /* Values use standard font now */
             .metric-value-large {
                 font-size: 2.2rem;
                 font-weight: 700;
@@ -364,7 +323,7 @@ def design_string():
                 flex-grow: 1;
             }
             
-            /* --- TYPOGRAPHY & VALUES --- */
+            /* --- TYPOGRAPHY & VALUES (UPDATED COLORS) --- */
             .sensor-card h3, .control-label, .pd-label {
                 color: #aaaaaa !important; 
                 font-weight: 500;
@@ -378,9 +337,10 @@ def design_string():
                 margin: 8px 0;
             }
 
-            .temp-value { color: #FF8A65; }
-            .humidity-value { color: #4DD0E1; }
-            .no-data-value { color: #666; font-style: italic; }
+            /* NEW COLORS */
+            .temp-value { color: #FFB74D !important; } /* Soft Orange */
+            .humidity-value { color: #4DD0E1 !important; } /* Muted Cyan */
+            .no-data-value { color: #9E9E9E; font-style: italic; } /* Medium Grey */
 
             /* Status Indicators */
             .status-indicator {
@@ -391,7 +351,7 @@ def design_string():
                 margin-right: 8px;
             }
             .status-connected { background-color: #00ADB5; }
-            .status-error { background-color: #E53935; }
+            .status-error { background-color: #EF5350; } /* Matte Red */
             
             .connection-status { color: #666; font-family: monospace; }
 
@@ -401,12 +361,12 @@ def design_string():
                 border-radius: 8px;
                 padding: 20px;
                 margin: 20px;
-                border: 1px solid #333;
+                border: 1px solid #333333; /* Updated Border */
                 position: relative;
                 z-index: 1; 
             }
 
-            /* --- PHOTODIODE PAGE: GRID --- */
+            /* --- PHOTODIODE GRID --- */
             .pd-grid-container {
                 display: flex;
                 gap: 15px;
@@ -417,7 +377,7 @@ def design_string():
             .pd-stat-button {
                 flex: 1;
                 background: #252525;
-                border: 1px solid #333;
+                border: 1px solid #333333; /* Updated Border */
                 border-radius: 6px;
                 padding: 15px 10px;
                 cursor: pointer;
@@ -446,7 +406,7 @@ def design_string():
                 color: #ddd;
             }
 
-            /* --- CUSTOM RADIO BUTTONS (Big & Teal) --- */
+            /* --- CUSTOM RADIO BUTTONS --- */
             #data-type-selector label {
                 display: inline-flex !important;
                 align-items: center;
@@ -487,9 +447,9 @@ def design_string():
                 box-shadow: inset 0 0 0 4px #1e1e1e;
             }
 
-            /* --- DATE PICKER REPAIR --- */
+            /* --- DATE PICKER REPAIR & UPDATES --- */
             .SingleDatePickerInput {
-                background-color: #252525 !important;
+                background-color: #2C2C2C !important; /* Lighter background for inputs */
                 border: 1px solid #444 !important;
                 border-radius: 4px;
                 display: flex;
@@ -511,8 +471,9 @@ def design_string():
                 line-height: normal;
             }
 
+            /* Changed placeholder text to #9E9E9E */
             .DateInput_input::placeholder {
-                color: #666;
+                color: #9E9E9E; 
             }
             
             .SingleDatePicker_picker { 
