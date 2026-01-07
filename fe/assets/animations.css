@@ -1,0 +1,88 @@
+/* Animation keyframes for highlight effect */
+@keyframes highlight-fade {
+  0% { background-color: rgba(170, 170, 170, 0.2); } /* Changed glow color to neutral gray */
+  100% { background-color: transparent; }
+}
+
+/* Enhanced value displays with transition effects */
+.value-display {
+  transition: all 0.3s ease;
+}
+
+/* Improved graph styling */
+.js-plotly-plot .plotly .modebar {
+  background: rgba(18, 18, 18, 0.7) !important;
+  backdrop-filter: blur(5px);
+  border-radius: 5px;
+}
+
+.js-plotly-plot .plotly .modebar-btn path {
+  fill: #aaaaaa !important; /* Changed from cyan to muted gray */
+}
+
+/* Custom scrollbar for all elements */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(18, 18, 18, 0.8);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3); /* Changed from neon gradient to neutral gray */
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5); /* Changed from neon gradient to neutral gray */
+}
+
+/* Better form controls */
+.form-check-input {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.form-check-input:checked {
+  transform: scale(1.1);
+}
+
+/* Dashboard header improvements */
+.dashboard-header {
+  background: linear-gradient(90deg, rgba(18, 18, 18, 0.8) 0%, rgba(24, 28, 32, 0.8) 100%);
+  backdrop-filter: blur(10px);
+  margin-bottom: 25px;
+  border-radius: 8px;
+  padding: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Changed from cyan to neutral gray */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Animated connection status indicators */
+.status-connected {
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* Enhanced tooltips */
+.tooltip-inner {
+  background-color: rgba(18, 18, 18, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important; /* Changed from cyan to neutral gray */
+  color: #ffffff !important;
+  font-family: 'Roboto', sans-serif !important;
+  backdrop-filter: blur(10px);
+  /* box-shadow removed */
+}
+
+/* Grid layout enhancements */
+.row {
+  margin-left: -10px;
+  margin-right: -10px;
+}
+
+.col, [class*="col-"] {
+  padding-left: 10px;
+  padding-right: 10px;
+}

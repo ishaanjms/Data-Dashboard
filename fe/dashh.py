@@ -1,0 +1,1468 @@
+import os
+import sys
+from datetime import datetime, timedelta
+import dash
+from dash import dcc, html, Output, Input, State, callback_context
+from dash.exceptions import PreventUpdate
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import pandas as pd
+import io
+import base64
+from flask import send_file
+import csv
+
+# Add parent directory to path to import from project root
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Import modules from fe.csv_reader
+from fe.csv_reader import (
+    get_latest_temp_humidity, get_temp_humidity_plot_data,
+    get_latest_laser, get_laser_plot_data,
+    get_latest_photodiode, get_photodiode_plot_data,
+    read_data_by_range, DATASET_BASE_DIR
+)
+
+# Import the design string from fe.design
+from fe.design import design_string
+
+# Constants
+REFRESH_INTERVAL_SECONDS = 10
+MAX_POINTS = 50
+CURRENT_DATETIME = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+# Initialize the app
+app = dash.Dash(
+    __name__, 
+    title="CsF1 Monitoring Dashboard",
+    assets_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets'),
+    update_title=None,  # Don't show "Updating..." title
+    suppress_callback_exceptions=True  # Suppress exceptions for components not in the initial layout
+)
+
+app.index_string = design_string() #
+server = app.server
+
+# Define reusable components for modular design
+def create_sidebar():
+    """Create the sidebar navigation component."""
+    return html.Div(
+        className="sidebar",
+        id="sidebar",
+        children=[
+            html.Div(
+                className="sidebar-header",
+                children=[
+                    html.H2("CsF1", style={"margin": "10px 0", "color": "#00ffff"}),
+                ],
+                style={"display": "flex", "alignItems": "center", "justifyContent": "center", "padding": "20px", "borderBottom": "1px solid #00ffff30"}
+            ),
+            html.Button(
+                id="sidebar-toggle",
+                className="sidebar-toggle",
+                children=html.I(className="fa fa-chevron-left")
+            ),
+            html.Div(
+                className="nav-links",
+                children=[
+                    html.A(
+                        className="nav-link",
+                        id="temp-humidity-link",
+                        href="#",
+                        children=[
+                            html.Img(src="assets/Temperature.svg", alt="Temperature & Humidity"),
+                            html.Span("Temperature & Humidity")
+                        ]
+                    ),
+                    html.A(
+                        className="nav-link",
+                        id="laser-link",
+                        href="#",
+                        children=[
+                            html.Img(src="assets/Laser.svg", alt="Lasers"),
+                            html.Span("Lasers")
+                        ]
+                    ),
+                    html.A(
+                        className="nav-link",
+                        id="photodiode-link",
+                        href="#",
+                        children=[
+                            html.Img(src="assets/Photodiode.svg", alt="Photodiodes"),
+                            html.Span("Photodiodes")
+                        ]
+                    ),
+                    
+                    html.Hr(style={'borderColor': 'rgba(0, 255, 255, 0.2)', 'margin': '15px 10px'}),
+                    
+                    html.A(
+                        className="nav-link",
+                        id="data-retrieval-link",
+                        href="#",
+                        children=[
+                            html.Img(src="assets/Download.svg", alt="Retrieve Data"),
+                            html.Span("Retrieve Data")
+                        ]
+                    ),
+                ],
+                style={"marginTop": "20px"}
+            ),
+        ]
+    )
+
+def create_header(title, subtitle):
+    """Create a header component with title and subtitle."""
+    return html.Div(
+        className="dashboard-header",
+        children=[
+            html.H1(title, className="header-title"),
+            html.P(subtitle, className="header-subtitle"),
+            html.Div(
+                id="connection-status",
+                className="connection-status",
+                children=[
+                    html.Span(className="status-indicator status-connected"),
+                    html.Span(id="connection-text", children=f"Connected | Last Update: {CURRENT_DATETIME}")
+                ],
+                style={"textAlign": "right", "fontSize": "0.8rem"}
+            )
+        ]
+    )
+
+def create_sensor_value_card(title, value, unit, color):
+    """Create a card displaying a sensor value with styling."""
+    return html.Div(
+        className="sensor-card",
+        children=[
+            html.H3(title, style={"textAlign": "center", "color": "#ffffff"}),
+            html.Div(
+                className="value-display",
+                style={"color": color},
+                children=value
+            ),
+            html.Div(
+                style={"textAlign": "center", "color": "#aaaaaa"},
+                children=unit
+            )
+        ]
+    )
+
+def create_graph_card(id, title):
+    """Create a card containing a graph with title."""
+    return html.Div(
+        className="graph-container",
+        children=[
+            html.H3(title, style={"marginBottom": "20px"}),
+            dcc.Graph(
+                id=id,
+                config={'displayModeBar': False},
+                style={"height": "300px"}
+            )
+        ]
+    )
+
+def create_sensor_selector(id, options):
+    """Create a component for selecting which sensors to display."""
+    return html.Div(
+        style={"marginBottom": "15px", "display": "flex", "justifyContent": "center"},
+        children=[
+            dcc.RadioItems(
+                id=id,
+                options=options,
+                value="both",
+                inline=True,
+                labelStyle={
+                    "marginRight": "20px",
+                    "cursor": "pointer",
+                    "display": "inline-flex",
+                    "alignItems": "center"
+                },
+                style={"display": "flex", "justifyContent": "center"}
+            )
+        ]
+    )
+
+# Define the layout for each page
+def temp_humidity_layout():
+    """Create the Temperature & Humidity page layout."""
+    return html.Div([
+        create_header("Temperature & Humidity", "Real-time Monitoring Dashboard"),
+        
+        # Current Values Section
+        html.Div(
+            className="row",
+            style={"display": "flex", "justifyContent": "space-around", "gap": "20px"}, # Added gap for spacing between cards
+            children=[
+                # AMBIENT SENSOR CARD
+                html.Div(
+                    className="col",
+                    style={"flex": "1"},
+                    children=[
+                        html.Div(
+                            className="sensor-card",
+                            children=[
+                                html.H3("Ambient", style={"textAlign": "center", "color": "#ffffff", "marginBottom": "20px"}),
+                                
+                                # Horizontal Container
+                                html.Div(
+                                    style={"display": "flex", "justifyContent": "space-around", "alignItems": "center"},
+                                    children=[
+                                        # LEFT SIDE: Temperature
+                                        html.Div(
+                                            style={"textAlign": "center"},
+                                            children=[
+                                                html.Div(
+                                                    className="value-display temp-value",
+                                                    id="temp1-value",
+                                                    children="--.-"
+                                                ),
+                                                html.Div(
+                                                    style={"color": "#aaaaaa", "fontSize": "0.9rem"},
+                                                    children="Temperature (°C)"
+                                                )
+                                            ]
+                                        ),
+                                        
+                                        # Vertical Divider Line (Optional visual separator)
+                                        html.Div(style={"width": "1px", "height": "50px", "backgroundColor": "rgba(255,255,255,0.1)"}),
+
+                                        # RIGHT SIDE: Humidity
+                                        html.Div(
+                                            style={"textAlign": "center"},
+                                            children=[
+                                                html.Div(
+                                                    className="value-display humidity-value",
+                                                    id="humidity1-value",
+                                                    children="--.-"
+                                                ),
+                                                html.Div(
+                                                    style={"color": "#aaaaaa", "fontSize": "0.9rem"},
+                                                    children="Humidity (%)"
+                                                )
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                ),
+                
+                # OPTICAL BENCH SENSOR CARD
+                html.Div(
+                    className="col",
+                    style={"flex": "1"},
+                    children=[
+                        html.Div(
+                            className="sensor-card",
+                            children=[
+                                html.H3("Optical Bench", style={"textAlign": "center", "color": "#ffffff", "marginBottom": "20px"}),
+                                
+                                # Horizontal Container
+                                html.Div(
+                                    style={"display": "flex", "justifyContent": "space-around", "alignItems": "center"},
+                                    children=[
+                                        # LEFT SIDE: Temperature
+                                        html.Div(
+                                            style={"textAlign": "center"},
+                                            children=[
+                                                html.Div(
+                                                    className="value-display temp-value",
+                                                    id="temp2-value",
+                                                    children="--.-"
+                                                ),
+                                                html.Div(
+                                                    style={"color": "#aaaaaa", "fontSize": "0.9rem"},
+                                                    children="Temperature (°C)"
+                                                )
+                                            ]
+                                        ),
+                                        
+                                        # Vertical Divider Line
+                                        html.Div(style={"width": "1px", "height": "50px", "backgroundColor": "rgba(255,255,255,0.1)"}),
+
+                                        # RIGHT SIDE: Humidity
+                                        html.Div(
+                                            style={"textAlign": "center"},
+                                            children=[
+                                                html.Div(
+                                                    className="value-display humidity-value",
+                                                    id="humidity2-value",
+                                                    children="--.-"
+                                                ),
+                                                html.Div(
+                                                    style={"color": "#aaaaaa", "fontSize": "0.9rem"},
+                                                    children="Humidity (%)"
+                                                )
+                                            ]
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                ),
+            ]
+        ),
+        
+        # Graphs Section (Unchanged)
+        html.Div(
+            style={"display": "flex", "flexWrap": "wrap"},
+            children=[
+                html.Div(
+                    style={"flex": "1 1 50%", "minWidth": "400px"},
+                    children=[
+                        create_sensor_selector(
+                            "temp-sensor-selector",
+                            [
+                                {"label": html.Span([html.Span(className="status-indicator status-connected"), "Both Sensors"]), "value": "both"},
+                                {"label": html.Span([html.Span(className="status-indicator", style={"backgroundColor": "#ff0000"}), "Ambient"]), "value": "sensor1"},
+                                {"label": html.Span([html.Span(className="status-indicator", style={"backgroundColor": "#00ffff"}), "Optical Bench"]), "value": "sensor2"}
+                            ]
+                        ),
+                        create_graph_card("temperature-graph", "Temperature (°C)")
+                    ]
+                ),
+                html.Div(
+                    style={"flex": "1 1 50%", "minWidth": "400px"},
+                    children=[
+                        create_sensor_selector(
+                            "humidity-sensor-selector",
+                            [
+                                {"label": html.Span([html.Span(className="status-indicator status-connected"), "Both Sensors"]), "value": "both"},
+                                {"label": html.Span([html.Span(className="status-indicator", style={"backgroundColor": "#ff0000"}), "Ambient"]), "value": "sensor1"},
+                                {"label": html.Span([html.Span(className="status-indicator", style={"backgroundColor": "#00ffff"}), "Optical Bench"]), "value": "sensor2"}
+                            ]
+                        ),
+                        create_graph_card("humidity-graph", "Humidity (%)")
+                    ]
+                )
+            ]
+        ),
+        
+        # Refresh interval component (hidden)
+        dcc.Interval(
+            id='temp-humidity-interval',
+            interval=REFRESH_INTERVAL_SECONDS * 1000,
+            n_intervals=0
+        )
+    ])
+
+def lasers_layout():
+    """Create the Lasers page layout."""
+    return html.Div([
+        create_header("Lasers", "Real-time Laser Monitoring"),
+        
+        # Current Values Section - X and Y Axis
+        html.Div(
+            style={"display": "flex", "flexWrap": "wrap", "justifyContent": "space-around"},
+            children=[
+                html.Div(
+                    className="sensor-card",
+                    style={"flex": "1", "minWidth": "300px", "border": "1px solid rgba(0, 255, 255, 0.1)"},
+                    children=[
+                        html.H3("X Axis", style={"textAlign": "center", "color": "#ffffff"}),
+                        html.Div(
+                            style={"display": "flex", "justifyContent": "space-around"},
+                            children=[
+                                html.Div(
+                                    style={"textAlign": "center"},
+                                    children=[
+                                        html.Div("X1", style={"color": "#9eff00", "marginBottom": "5px"}),
+                                        html.Div(
+                                            id="x1-value",
+                                            className="value-display",
+                                            style={"color": "#9eff00", "fontSize": "2rem"},
+                                            children="-.----"
+                                        )
+                                    ]
+                                ),
+                                html.Div(
+                                    style={"textAlign": "center"},
+                                    children=[
+                                        html.Div("X2", style={"color": "#00ffff", "marginBottom": "5px"}),
+                                        html.Div(
+                                            id="x2-value",
+                                            className="value-display",
+                                            style={"color": "#00ffff", "fontSize": "2rem"},
+                                            children="-.----"
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                ),
+                
+                html.Div(
+                    className="sensor-card",
+                    style={"flex": "1", "minWidth": "300px", "border": "1px solid rgba(0, 255, 255, 0.1)"},
+                    children=[
+                        html.H3("Y Axis", style={"textAlign": "center", "color": "#ffffff"}),
+                        html.Div(
+                            style={"display": "flex", "justifyContent": "space-around"},
+                            children=[
+                                html.Div(
+                                    style={"textAlign": "center"},
+                                    children=[
+                                        html.Div("Y1", style={"color": "#9eff00", "marginBottom": "5px"}),
+                                        html.Div(
+                                            id="y1-value",
+                                            className="value-display",
+                                            style={"color": "#9eff00", "fontSize": "2rem"},
+                                            children="-.----"
+                                        )
+                                    ]
+                                ),
+                                html.Div(
+                                    style={"textAlign": "center"},
+                                    children=[
+                                        html.Div("Y2", style={"color": "#00ffff", "marginBottom": "5px"}),
+                                        html.Div(
+                                            id="y2-value",
+                                            className="value-display",
+                                            style={"color": "#00ffff", "fontSize": "2rem"},
+                                            children="-.----"
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                ),
+            ]
+        ),
+        
+        # Current Values Section - Z and D Axis
+        html.Div(
+            style={"display": "flex", "flexWrap": "wrap", "justifyContent": "space-around", "marginTop": "20px"},
+            children=[
+                html.Div(
+                    className="sensor-card",
+                    style={"flex": "1", "minWidth": "300px", "border": "1px solid rgba(0, 255, 255, 0.1)"},
+                    children=[
+                        html.H3("Z Axis", style={"textAlign": "center", "color": "#ffffff"}),
+                        html.Div(
+                            style={"display": "flex", "justifyContent": "space-around"},
+                            children=[
+                                html.Div(
+                                    style={"textAlign": "center"},
+                                    children=[
+                                        html.Div("Z1", style={"color": "#9eff00", "marginBottom": "5px"}),
+                                        html.Div(
+                                            id="z1-value",
+                                            className="value-display",
+                                            style={"color": "#9eff00", "fontSize": "2rem"},
+                                            children="-.----"
+                                        )
+                                    ]
+                                ),
+                                html.Div(
+                                    style={"textAlign": "center"},
+                                    children=[
+                                        html.Div("Z2", style={"color": "#00ffff", "marginBottom": "5px"}),
+                                        html.Div(
+                                            id="z2-value",
+                                            className="value-display",
+                                            style={"color": "#00ffff", "fontSize": "2rem"},
+                                            children="-.----"
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                ),
+                
+                html.Div(
+                    className="sensor-card",
+                    style={"flex": "1", "minWidth": "300px", "border": "1px solid rgba(0, 255, 255, 0.1)"},
+                    children=[
+                        html.H3("D Axis", style={"textAlign": "center", "color": "#ffffff"}),
+                        html.Div(
+                            style={"display": "flex", "justifyContent": "space-around"},
+                            children=[
+                                html.Div(
+                                    style={"textAlign": "center"},
+                                    children=[
+                                        html.Div("D1", style={"color": "#9eff00", "marginBottom": "5px"}),
+                                        html.Div(
+                                            id="d1-value",
+                                            className="value-display",
+                                            style={"color": "#9eff00", "fontSize": "2rem"},
+                                            children="-.----"
+                                        )
+                                    ]
+                                ),
+                                html.Div(
+                                    style={"textAlign": "center"},
+                                    children=[
+                                        html.Div("D2", style={"color": "#00ffff", "marginBottom": "5px"}),
+                                        html.Div(
+                                            id="d2-value",
+                                            className="value-display",
+                                            style={"color": "#00ffff", "fontSize": "2rem"},
+                                            children="-.----"
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                ),
+            ]
+        ),
+        
+        # Graphs Section
+        html.Div(
+            style={"display": "flex", "flexWrap": "wrap", "marginTop": "20px"},
+            children=[
+                html.Div(
+                    style={"flex": "1 1 50%", "minWidth": "400px"},
+                    children=[
+                        create_graph_card("x-axis-graph", "X-Axis Laser Readings")
+                    ]
+                ),
+                html.Div(
+                    style={"flex": "1 1 50%", "minWidth": "400px"},
+                    children=[
+                        create_graph_card("y-axis-graph", "Y-Axis Laser Readings")
+                    ]
+                ),
+            ]
+        ),
+        
+        html.Div(
+            style={"display": "flex", "flexWrap": "wrap", "marginTop": "20px"},
+            children=[
+                html.Div(
+                    style={"flex": "1 1 50%", "minWidth": "400px"},
+                    children=[
+                        create_graph_card("z-axis-graph", "Z-Axis Laser Readings")
+                    ]
+                ),
+                html.Div(
+                    style={"flex": "1 1 50%", "minWidth": "400px"},
+                    children=[
+                        create_graph_card("d-axis-graph", "D-Axis Laser Readings")
+                    ]
+                ),
+            ]
+        ),
+        
+        # Refresh interval component (hidden)
+        dcc.Interval(
+            id='lasers-interval',
+            interval=REFRESH_INTERVAL_SECONDS * 1000,  # in milliseconds
+            n_intervals=0
+        )
+    ])
+
+def photodiodes_layout():
+    """Create the Photodiodes page layout."""
+    return html.Div([
+        create_header("Photodiodes", "Real-time Photodiode Monitoring"),
+        
+        # Photodiode Selection Section
+        html.Div(
+            className="pd-grid-container", # Uses the flex container
+            children=[
+                html.Div(
+                    id="pd1-button",
+                    className="pd-stat-button",
+                    children=[
+                        html.Div("Fiber Output", className="pd-label"),
+                        html.Div(id="pd1-value", className="pd-value", children="--")
+                    ]
+                ),
+                html.Div(
+                    id="pd2-button",
+                    className="pd-stat-button",
+                    children=[
+                        html.Div("Grand Detection", className="pd-label"),
+                        html.Div(id="pd2-value", className="pd-value", children="--")
+                    ]
+                ),
+                html.Div(
+                    id="pd3-button",
+                    className="pd-stat-button",
+                    children=[
+                        html.Div("AOM 5", className="pd-label"),
+                        html.Div(id="pd3-value", className="pd-value", children="--")
+                    ]
+                ),
+                html.Div(
+                    id="pd4-button",
+                    className="pd-stat-button",
+                    children=[
+                        html.Div("AOM 3", className="pd-label"),
+                        html.Div(id="pd4-value", className="pd-value", children="--")
+                    ]
+                ),
+                html.Div(
+                    id="pd5-button",
+                    className="pd-stat-button",
+                    children=[
+                        html.Div("AOM 2", className="pd-label"),
+                        html.Div(id="pd5-value", className="pd-value", children="--")
+                    ]
+                ),
+            ]
+        ),
+        
+        # Graph Section
+        html.Div(
+            className="sensor-card",
+            style={"margin": "20px"},
+            children=[
+                html.H3("Photodiode Readings", style={"textAlign": "center", "color": "#ffffff", "marginBottom": "20px"}),
+                dcc.Graph(
+                    id="photodiode-graph",
+                    config={'displayModeBar': False},
+                    style={"height": "500px"}
+                )
+            ]
+        ),
+        
+        # Store active photodiodes (hidden) - initialize with all photodiodes active
+        dcc.Store(id='active-photodiodes', data=['P1', 'P2', 'P3', 'P4', 'P5']),
+        
+        # Refresh interval component (hidden)
+        dcc.Interval(
+            id='photodiodes-interval',
+            interval=REFRESH_INTERVAL_SECONDS * 1000,  # in milliseconds
+            n_intervals=0
+        )
+    ])
+
+def data_retrieval_layout():
+    """Create the Data Retrieval page layout."""
+    return html.Div([
+        create_header("Retrieve Data", "Download or plot historical data for analysis"),
+        
+        # Main Card
+        html.Div(
+            className="sensor-card",
+            style={"maxWidth": "800px", "margin": "20px auto", "padding": "40px"},
+            children=[
+                
+                # Section 1: Data Type
+                html.Div(
+                    style={"marginBottom": "30px"},
+                    children=[
+                        html.Label("1. Select Data Source", className="control-label"),
+                        dcc.RadioItems(
+                            id="data-type-selector",
+                            options=[
+                                {'label': ' Temp & Humidity', 'value': 'Temp_Humidity_data'},
+                                {'label': ' Lasers', 'value': 'Lasers_data'},
+                                {'label': ' Photodiode', 'value': 'Photodiode_data'}
+                            ],
+                            value='Temp_Humidity_data',
+                            # Using flexbox to spread them evenly
+                            style={"display": "flex", "gap": "20px", "marginTop": "10px"},
+                            labelStyle={
+                                "cursor": "pointer",
+                                "display": "flex",
+                                "alignItems": "center",
+                                "fontWeight": "500",
+                                "color": "#ffffff"
+                            },
+                            inputStyle={"marginRight": "8px", "accentColor": "#00ffff"}, # accentColor styles the radio dot
+                        ),
+                    ]
+                ),
+                
+                html.Hr(style={"borderColor": "rgba(255,255,255,0.1)", "marginBottom": "30px"}),
+
+                # Section 2: Date Range
+                html.Div(
+                    style={"marginBottom": "40px"},
+                    children=[
+                        html.Label("2. Select Time Period", className="control-label"),
+                        html.Div(
+                            style={"display": "flex", "gap": "20px", "alignItems": "end"},
+                            children=[
+                                # Start Date
+                                html.Div(
+                                    style={"flex": "1"},
+                                    children=[
+                                        html.Span("Start", style={"fontSize": "0.8rem", "color": "#aaaaaa", "marginBottom": "5px", "display": "block"}),
+                                        dcc.DatePickerSingle(
+                                            id='start-date-picker',
+                                            date=datetime.now().date(),
+                                            display_format='YYYY-MM-DD',
+                                            className="dark-date-picker", # We will target this in CSS if needed, but styling above covers generic classes
+                                            style={"width": "100%"}
+                                        )
+                                    ]
+                                ),
+                                
+                                # Visual Arrow
+                                html.Div(
+                                    html.I(className="fa fa-arrow-right", style={"color": "#666"}),
+                                    style={"paddingBottom": "10px"}
+                                ),
+
+                                # End Date
+                                html.Div(
+                                    style={"flex": "1"},
+                                    children=[
+                                        html.Span("End", style={"fontSize": "0.8rem", "color": "#aaaaaa", "marginBottom": "5px", "display": "block"}),
+                                        dcc.DatePickerSingle(
+                                            id='end-date-picker',
+                                            date=datetime.now().date(),
+                                            display_format='YYYY-MM-DD',
+                                            style={"width": "100%"}
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                ),
+                
+                # Section 3: Action Buttons
+                html.Div(
+                    style={"display": "flex", "gap": "15px", "marginTop": "20px"},
+                    children=[
+                        html.Button(
+                            id="plot-button",
+                            className="retrieve-action-button btn-primary", # Uses the new CSS class
+                            children=[html.I(className="fa fa-area-chart", style={"marginRight": "8px"}), "PLOT DATA"],
+                            style={"flex": "2", "padding": "12px", "borderRadius": "8px", "cursor": "pointer"}
+                        ),
+                        html.Button(
+                            id="download-button",
+                            className="retrieve-action-button btn-secondary", # Uses the new CSS class
+                            children=[html.I(className="fa fa-download", style={"marginRight": "8px"}), "Download CSV"],
+                            style={"flex": "1", "padding": "12px", "borderRadius": "8px", "cursor": "pointer"}
+                        ),
+                    ]
+                ),
+                dcc.Download(id="download-data")
+            ]
+        ),
+        
+        # Historical Plot Area
+        html.Div(
+            id="historical-plot-container",
+            className="graph-container",
+            style={"marginTop": "30px"},
+            children=[
+                dcc.Graph(id="historical-data-graph", style={"height": "600px"})
+            ]
+        )
+    ])
+
+
+# Define the main layout with URL routing
+app.layout = html.Div([
+    # Store current page
+    dcc.Store(id='current-page', data='temp-humidity'),
+    
+    # Main components
+    create_sidebar(),
+    
+    html.Div(
+        id="main-content",
+        className="main-content",
+        children=[temp_humidity_layout()]
+    )
+])
+
+# --- CALLBACKS ---
+
+# Sidebar toggle callback
+@app.callback(
+    [Output('sidebar', 'className'),
+     Output('main-content', 'className')],
+    [Input('sidebar-toggle', 'n_clicks')],
+    [State('sidebar', 'className')]
+)
+def toggle_sidebar(n_clicks, current_class):
+    if n_clicks is None:
+        return "sidebar", "main-content"
+    
+    if current_class == "sidebar":
+        return "sidebar collapsed", "main-content expanded"
+    else:
+        return "sidebar", "main-content"
+
+# Navigation callbacks
+@app.callback(
+    [Output('main-content', 'children'),
+     Output('current-page', 'data'),
+     Output('temp-humidity-link', 'className'),
+     Output('laser-link', 'className'),
+     Output('photodiode-link', 'className'),
+     Output('data-retrieval-link', 'className')],
+    [Input('temp-humidity-link', 'n_clicks'),
+     Input('laser-link', 'n_clicks'),
+     Input('photodiode-link', 'n_clicks'),
+     Input('data-retrieval-link', 'n_clicks')],
+    [State('current-page', 'data')]
+)
+def navigate_pages(temp_click, laser_click, photodiode_click, data_click, current_page):
+    ctx = callback_context
+    
+    if not ctx.triggered:
+        # Default page
+        return temp_humidity_layout(), 'temp-humidity', 'nav-link active', 'nav-link', 'nav-link', 'nav-link'
+    
+    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    
+    if button_id == 'temp-humidity-link':
+        return temp_humidity_layout(), 'temp-humidity', 'nav-link active', 'nav-link', 'nav-link', 'nav-link'
+    elif button_id == 'laser-link':
+        return lasers_layout(), 'lasers', 'nav-link', 'nav-link active', 'nav-link', 'nav-link'
+    elif button_id == 'photodiode-link':
+        return photodiodes_layout(), 'photodiodes', 'nav-link', 'nav-link', 'nav-link active', 'nav-link'
+    elif button_id == 'data-retrieval-link':
+        return data_retrieval_layout(), 'data-retrieval', 'nav-link', 'nav-link', 'nav-link', 'nav-link active'
+    
+    # Fallback
+    return temp_humidity_layout(), 'temp-humidity', 'nav-link active', 'nav-link', 'nav-link', 'nav-link'
+
+# Temperature & Humidity callbacks
+@app.callback(
+    [Output('temp1-value', 'children'),
+     Output('humidity1-value', 'children'),
+     Output('temp2-value', 'children'),
+     Output('humidity2-value', 'children'),
+     Output('temperature-graph', 'figure'),
+     Output('humidity-graph', 'figure'),
+     Output('connection-text', 'children')],
+    [Input('temp-humidity-interval', 'n_intervals'),
+     Input('temp-sensor-selector', 'value'),
+     Input('humidity-sensor-selector', 'value')],
+    [State('current-page', 'data')]
+)
+def update_temp_humidity(n, temp_sensor, humidity_sensor, current_page):
+    # Only update if we're on the temp humidity page
+    if current_page != 'temp-humidity':
+        raise PreventUpdate
+    
+    # Get latest data
+    latest_data = get_latest_temp_humidity(os.path.join(DATASET_BASE_DIR, 'Temp_Humidity_data'))
+    plot_data = get_temp_humidity_plot_data(os.path.join(DATASET_BASE_DIR, 'Temp_Humidity_data'), MAX_POINTS)
+    
+    # Update timestamp
+    update_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if latest_data and latest_data.get('timestamp'):
+        update_time = latest_data['timestamp'].strftime("%H:%M:%S")
+    connection_text = f"Connected | Last Update: {update_time}"
+    
+    # Format current values
+    temp1 = f"{latest_data['temp1']:.2f}" if latest_data and latest_data.get('temp1') is not None else "--.-"
+    hum1 = f"{latest_data['humidity1']:.2f}" if latest_data and latest_data.get('humidity1') is not None else "--.-"
+    temp2 = f"{latest_data['temp2']:.2f}" if latest_data and latest_data.get('temp2') is not None else "--.-"
+    hum2 = f"{latest_data['humidity2']:.2f}" if latest_data and latest_data.get('humidity2') is not None else "--.-"
+    
+    # Create temperature graph
+    temp_fig = go.Figure()
+    temp_fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=40, r=20, t=10, b=30),
+        xaxis=dict(
+            showgrid=True,
+            gridcolor="rgba(255,255,255,0.1)",
+            title="Time Points"
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor="rgba(255,255,255,0.1)",
+            title="Temperature (°C)"
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5
+        ),
+    )
+    
+    # Add temperature traces based on selection
+    if temp_sensor in ['both', 'sensor1']:
+        temp_fig.add_trace(go.Scatter(
+            x=plot_data['time_points'],
+            y=plot_data['temp1'],
+            mode='lines',
+            name='Ambient',
+            line=dict(color='#ff0000', width=2)
+        ))
+    
+    if temp_sensor in ['both', 'sensor2']:
+        temp_fig.add_trace(go.Scatter(
+            x=plot_data['time_points'],
+            y=plot_data['temp2'],
+            mode='lines',
+            name='Optical Bench',
+            line=dict(color='#00ffff', width=2)
+        ))
+    
+    # Create humidity graph
+    hum_fig = go.Figure()
+    hum_fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=40, r=20, t=10, b=30),
+        xaxis=dict(
+            showgrid=True,
+            gridcolor="rgba(255,255,255,0.1)",
+            title="Time Points"
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor="rgba(255,255,255,0.1)",
+            title="Humidity (%)"
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5
+        ),
+    )
+    
+    # Add humidity traces based on selection
+    if humidity_sensor in ['both', 'sensor1']:
+        hum_fig.add_trace(go.Scatter(
+            x=plot_data['time_points'],
+            y=plot_data['humidity1'],
+            mode='lines',
+            name='Ambient',
+            line=dict(color='#ff0000', width=2)
+        ))
+    
+    if humidity_sensor in ['both', 'sensor2']:
+        hum_fig.add_trace(go.Scatter(
+            x=plot_data['time_points'],
+            y=plot_data['humidity2'],
+            mode='lines',
+            name='Optical Bench',
+            line=dict(color='#00ffff', width=2)
+        ))
+    
+    return temp1, hum1, temp2, hum2, temp_fig, hum_fig, connection_text
+
+# Lasers callbacks
+@app.callback(
+    [Output('x1-value', 'children'),
+     Output('x2-value', 'children'),
+     Output('y1-value', 'children'),
+     Output('y2-value', 'children'),
+     Output('z1-value', 'children'),
+     Output('z2-value', 'children'),
+     Output('d1-value', 'children'),
+     Output('d2-value', 'children'),
+     Output('x-axis-graph', 'figure'),
+     Output('y-axis-graph', 'figure'),
+     Output('z-axis-graph', 'figure'),
+     Output('d-axis-graph', 'figure')],
+    [Input('lasers-interval', 'n_intervals')],
+    [State('current-page', 'data')]
+)
+def update_lasers(n, current_page):
+    # Only update if we're on the lasers page
+    if current_page != 'lasers':
+        raise PreventUpdate
+    
+    # Get latest data
+    latest_data = get_latest_laser(os.path.join(DATASET_BASE_DIR, 'Lasers_data'))
+    plot_data = get_laser_plot_data(os.path.join(DATASET_BASE_DIR, 'Lasers_data'), MAX_POINTS)
+    
+    # Format current values
+    x1 = f"{latest_data['X1']:.4f}" if latest_data and latest_data.get('X1') is not None else "-.----"
+    x2 = f"{latest_data['X2']:.4f}" if latest_data and latest_data.get('X2') is not None else "-.----"
+    y1 = f"{latest_data['Y1']:.4f}" if latest_data and latest_data.get('Y1') is not None else "-.----"
+    y2 = f"{latest_data['Y2']:.4f}" if latest_data and latest_data.get('Y2') is not None else "-.----"
+    z1 = f"{latest_data['Z1']:.4f}" if latest_data and latest_data.get('Z1') is not None else "-.----"
+    z2 = f"{latest_data['Z2']:.4f}" if latest_data and latest_data.get('Z2') is not None else "-.----"
+    d1 = f"{latest_data['D1']:.4f}" if latest_data and latest_data.get('D1') is not None else "-.----"
+    d2 = f"{latest_data['D2']:.4f}" if latest_data and latest_data.get('D2') is not None else "-.----"
+    
+    # Base figure settings
+    def create_base_figure(title, y_title):
+        fig = go.Figure()
+        fig.update_layout(
+            template="plotly_dark",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            margin=dict(l=40, r=20, t=10, b=30),
+            xaxis=dict(
+                showgrid=True,
+                gridcolor="rgba(255,255,255,0.1)",
+                title="Time Points"
+            ),
+            yaxis=dict(
+                showgrid=True,
+                gridcolor="rgba(255,255,255,0.1)",
+                title=y_title
+            ),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="center",
+                x=0.5
+            ),
+        )
+        return fig
+    
+    # Create X axis graph
+    x_fig = create_base_figure("X-Axis Laser Readings", "Position (mm)")
+    x_fig.add_trace(go.Scatter(
+        x=plot_data['time_points'],
+        y=plot_data['X1'],
+        mode='lines',
+        name='X1',
+        line=dict(color='#9eff00', width=2)
+    ))
+    x_fig.add_trace(go.Scatter(
+        x=plot_data['time_points'],
+        y=plot_data['X2'],
+        mode='lines',
+        name='X2',
+        line=dict(color='#00ffff', width=2)
+    ))
+    
+    # Create Y axis graph
+    y_fig = create_base_figure("Y-Axis Laser Readings", "Position (mm)")
+    y_fig.add_trace(go.Scatter(
+        x=plot_data['time_points'],
+        y=plot_data['Y1'],
+        mode='lines',
+        name='Y1',
+        line=dict(color='#9eff00', width=2)
+    ))
+    y_fig.add_trace(go.Scatter(
+        x=plot_data['time_points'],
+        y=plot_data['Y2'],
+        mode='lines',
+        name='Y2',
+        line=dict(color='#00ffff', width=2)
+    ))
+    
+    # Create Z axis graph
+    z_fig = create_base_figure("Z-Axis Laser Readings", "Position (mm)")
+    z_fig.add_trace(go.Scatter(
+        x=plot_data['time_points'],
+        y=plot_data['Z1'],
+        mode='lines',
+        name='Z1',
+        line=dict(color='#9eff00', width=2)
+    ))
+    z_fig.add_trace(go.Scatter(
+        x=plot_data['time_points'],
+        y=plot_data['Z2'],
+        mode='lines',
+        name='Z2',
+        line=dict(color='#00ffff', width=2)
+    ))
+    
+    # Create D axis graph
+    d_fig = create_base_figure("D-Axis Laser Readings", "Position (mm)")
+    d_fig.add_trace(go.Scatter(
+        x=plot_data['time_points'],
+        y=plot_data['D1'],
+        mode='lines',
+        name='D1',
+        line=dict(color='#9eff00', width=2)
+    ))
+    d_fig.add_trace(go.Scatter(
+        x=plot_data['time_points'],
+        y=plot_data['D2'],
+        mode='lines',
+        name='D2',
+        line=dict(color='#00ffff', width=2)
+    ))
+    
+    return x1, x2, y1, y2, z1, z2, d1, d2, x_fig, y_fig, z_fig, d_fig
+
+# Photodiode button callbacks
+@app.callback(
+    [Output('pd1-button', 'style'),
+     Output('pd2-button', 'style'),
+     Output('pd3-button', 'style'),
+     Output('pd4-button', 'style'),
+     Output('pd5-button', 'style'),
+     Output('pd1-value', 'style'),
+     Output('pd2-value', 'style'),
+     Output('pd3-value', 'style'),
+     Output('pd4-value', 'style'),
+     Output('pd5-value', 'style'),
+     Output('active-photodiodes', 'data')],
+    [Input('pd1-button', 'n_clicks'),
+     Input('pd2-button', 'n_clicks'),
+     Input('pd3-button', 'n_clicks'),
+     Input('pd4-button', 'n_clicks'),
+     Input('pd5-button', 'n_clicks')],
+    [State('active-photodiodes', 'data')]
+)
+def toggle_photodiodes(btn1, btn2, btn3, btn4, btn5, active_pds):
+    ctx = callback_context
+    
+    # Define the colors for each sensor (matching your graph)
+    colors = {
+        'P1': '#9eff00', # Green
+        'P2': '#00ffff', # Cyan
+        'P3': '#ff9900', # Orange
+        'P4': '#ff00ff', # Pink
+        'P5': '#ffffff'  # White
+    }
+    
+    # Handle clicks
+    if ctx.triggered:
+        button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+        # Map button IDs to Sensor Codes
+        btn_map = {'pd1-button': 'P1', 'pd2-button': 'P2', 'pd3-button': 'P3', 'pd4-button': 'P4', 'pd5-button': 'P5'}
+        clicked_pd = btn_map.get(button_id)
+        
+        if clicked_pd:
+            if clicked_pd in active_pds:
+                active_pds.remove(clicked_pd)
+            else:
+                active_pds.append(clicked_pd)
+    elif not active_pds: # Default state if empty
+         active_pds = ['P1', 'P2', 'P3', 'P4', 'P5']
+
+    # Generate Styles
+    btn_styles = []
+    text_styles = []
+    
+    sensor_order = ['P1', 'P2', 'P3', 'P4', 'P5']
+    
+    for sensor in sensor_order:
+        base_color = colors[sensor]
+        
+        if sensor in active_pds:
+            # ACTIVE STATE: Colored Border + Glowing Text
+            btn_style = {
+                "border": f"1px solid {base_color}",
+                "boxShadow": f"0 0 15px {base_color}20", # Subtle glow (20 is low opacity hex)
+                "opacity": "1"
+            }
+            text_style = {"color": base_color}
+        else:
+            # INACTIVE STATE: Grey Border + Dimmed Text
+            btn_style = {
+                "border": "1px solid rgba(255,255,255,0.1)",
+                "opacity": "0.5" # Make the whole button look "off"
+            }
+            text_style = {"color": "#666666"}
+            
+        btn_styles.append(btn_style)
+        text_styles.append(text_style)
+
+    return (*btn_styles, *text_styles, active_pds)
+
+# Photodiode values update callback
+@app.callback(
+    [Output('pd1-value', 'children'),
+     Output('pd2-value', 'children'),
+     Output('pd3-value', 'children'),
+     Output('pd4-value', 'children'),
+     Output('pd5-value', 'children')],
+    [Input('photodiodes-interval', 'n_intervals')],
+    [State('current-page', 'data')]
+)
+def update_photodiode_values(n, current_page):
+    # Only update if we're on the photodiodes page
+    if current_page != 'photodiodes':
+        raise PreventUpdate
+    
+    # Get latest data
+    latest_data = get_latest_photodiode(os.path.join(DATASET_BASE_DIR, 'Photodiode_data'))
+    
+    if not latest_data:
+        return "--", "--", "--", "--", "--"
+    
+    # Format values with 2 decimal places
+    p1_val = f"{latest_data.get('P1', 0):.2f}" if latest_data.get('P1') is not None else "--"
+    p2_val = f"{latest_data.get('P2', 0):.2f}" if latest_data.get('P2') is not None else "--"
+    p3_val = f"{latest_data.get('P3', 0):.2f}" if latest_data.get('P3') is not None else "--"
+    p4_val = f"{latest_data.get('P4', 0):.2f}" if latest_data.get('P4') is not None else "--"
+    p5_val = f"{latest_data.get('P5', 0):.2f}" if latest_data.get('P5') is not None else "--"
+    
+    return p1_val, p2_val, p3_val, p4_val, p5_val
+
+# Photodiode graph update callback
+@app.callback(
+    Output('photodiode-graph', 'figure'),
+    [Input('photodiodes-interval', 'n_intervals'),
+     Input('active-photodiodes', 'data')],
+    [State('current-page', 'data')]
+)
+def update_photodiode_graph(n, active_pds, current_page):
+    if current_page != 'photodiodes':
+        raise PreventUpdate
+    
+    plot_data = get_photodiode_plot_data(os.path.join(DATASET_BASE_DIR, 'Photodiode_data'), MAX_POINTS)
+    
+    fig = go.Figure()
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(255,255,255,0.05)",
+        margin=dict(l=40, r=20, t=10, b=30),
+        xaxis=dict(
+            showgrid=True,
+            gridcolor="rgba(255,255,255,0.1)",
+            title="Time"
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor="rgba(255,255,255,0.1)",
+            title="Value"
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5
+        ),
+    )
+    
+    colors = {
+        'P1': '#9eff00',
+        'P2': '#00ffff',
+        'P3': '#ff9900',
+        'P4': '#ff00ff',
+        'P5': '#ffffff'
+    }
+    
+    pd_display_names = {
+        'P1': 'Fiber Output',
+        'P2': 'Grand Detection',
+        'P3': 'AOM 5',
+        'P4': 'AOM 3',
+        'P5': 'AOM 2'
+    }
+    
+    # Use 'pd_name' to avoid conflict with pandas alias 'pd'
+    for pd_name in active_pds:
+        # Check if the key exists and the list is not empty
+        if pd_name in plot_data and plot_data[pd_name]:
+            fig.add_trace(go.Scatter(
+                x=plot_data['datetime'], # Plot against datetime objects
+                y=plot_data[pd_name],
+                mode='lines',
+                name=pd_display_names.get(pd_name, pd_name),
+                line=dict(color=colors.get(pd_name, '#ffffff'), width=2)
+            ))
+    
+    return fig
+
+
+# Keep date pickers in sync and prevent invalid ranges
+@app.callback(
+    Output('start-date-picker', 'max_date_allowed'),
+    Output('end-date-picker', 'min_date_allowed'),
+    Output('start-date-picker', 'date'),
+    Output('end-date-picker', 'date'),
+    [Input('start-date-picker', 'date'),
+     Input('end-date-picker', 'date')]
+)
+def sync_date_pickers(start_date, end_date):
+    today = datetime.now().date()
+
+    def _normalize(value):
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, str):
+            return datetime.strptime(value.split('T')[0], "%Y-%m-%d").date()
+        if value:
+            return value  # already a date object
+        return today
+
+    start = _normalize(start_date)
+    end = _normalize(end_date)
+    
+    if start > end:
+        end = start
+    
+    return end, start, start, end
+
+
+# Data download callback
+@app.callback(
+    Output('download-data', 'data'),
+    [Input('download-button', 'n_clicks')],
+    [State('data-type-selector', 'value'),
+     State('start-date-picker', 'date'),
+     State('end-date-picker', 'date')]
+)
+def download_data(n_clicks, data_type, start_date, end_date):
+    if n_clicks is None:
+        raise PreventUpdate
+    
+    try:
+        start_date_obj = datetime.strptime(start_date.split('T')[0], "%Y-%m-%d").date()
+        end_date_obj = datetime.strptime(end_date.split('T')[0], "%Y-%m-%d").date()
+        
+        data = read_data_by_range(data_type, start_date_obj, end_date_obj)
+        
+        if not data:
+            return dict(
+                content=f"No data found for {data_type} from {start_date_obj} to {end_date_obj}",
+                filename=f"{data_type}_{start_date_obj}_to_{end_date_obj}.txt",
+                type="text/plain"
+            )
+        
+        if data:
+            csv_buffer = io.StringIO()
+            csv_writer = csv.DictWriter(csv_buffer, fieldnames=data[0].keys())
+            csv_writer.writeheader()
+            csv_writer.writerows(data)
+            
+            filename = f"{data_type}_{start_date_obj}_to_{end_date_obj}.csv"
+            
+            return dict(
+                content=csv_buffer.getvalue(),
+                filename=filename,
+                type="text/csv"
+            )
+    
+    except Exception as e:
+        print(f"Error in download_data: {e}")
+        return dict(
+            content=f"Error: {str(e)}",
+            filename="error.txt",
+            type="text/plain"
+        )
+
+# --- RECTIFIED CALLBACK FOR HISTORICAL PLOTTING WITH VISUAL IMPROVEMENTS ---
+@app.callback(
+    Output('historical-data-graph', 'figure'),
+    [Input('plot-button', 'n_clicks')],
+    [State('data-type-selector', 'value'),
+     State('start-date-picker', 'date'),
+     State('end-date-picker', 'date')]
+)
+def update_historical_graph(n_clicks, data_type, start_date, end_date):
+    if n_clicks is None:
+        return go.Figure().update_layout(
+            template="plotly_dark",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(255,255,255,0.05)",
+        )
+    
+    start_date_obj = datetime.strptime(start_date.split('T')[0], "%Y-%m-%d").date()
+    end_date_obj = datetime.strptime(end_date.split('T')[0], "%Y-%m-%d").date()
+    
+    data = read_data_by_range(data_type, start_date_obj, end_date_obj)
+    
+    # --- VISUAL IMPROVEMENTS ARE HERE ---
+    fig_layout = {
+        "template": "plotly_dark",
+        "paper_bgcolor": "rgba(0,0,0,0)",
+        "plot_bgcolor": "rgba(255,255,255,0.05)",
+        "margin": dict(l=50, r=50, t=90, b=50),  # Increased margins
+        "legend": {
+            "bgcolor": "rgba(26,26,26,0.8)",      # Semi-transparent background
+            "bordercolor": "rgba(0, 255, 255, 0.5)",
+            "borderwidth": 1
+        },
+        "title_x": 0.5,  # Center the main title
+    }
+
+    if not data:
+        fig = go.Figure()
+        fig.update_layout(
+            **fig_layout,
+            title_text=f"No Data Found for {data_type.replace('_', ' ')}",
+            xaxis={"visible": False}, yaxis={"visible": False},
+            annotations=[{"text": "Please select a different date range or data type.", "xref": "paper", "yref": "paper", "showarrow": False, "font": {"size": 16}}]
+        )
+        return fig
+    
+    df = pd.DataFrame(data)
+    
+    if 'MJD' in df.columns and pd.to_numeric(df['MJD'], errors='coerce').notna().any():
+        x_axis_col = 'MJD'
+        x_axis_title = "MJD (Modified Julian Date)"
+        df[x_axis_col] = pd.to_numeric(df[x_axis_col], errors='coerce')
+    else:
+        x_axis_col = 'timestamp'
+        x_axis_title = "Timestamp"
+        df[x_axis_col] = pd.to_datetime(df[x_axis_col].str.replace(' IST', ''), errors='coerce')
+    
+    df = df.sort_values(x_axis_col).dropna(subset=[x_axis_col])
+
+    if data_type == 'Temp_Humidity_data':
+        # For this specific case, we use two separate legends for clarity
+        fig = make_subplots(rows=2, cols=1, shared_xaxes=True, subplot_titles=('Temperature (°C)', 'Humidity (%)'))
+        cols_to_convert = ['T1', 'T2', 'H1', 'H2']
+        df[cols_to_convert] = df[cols_to_convert].apply(pd.to_numeric, errors='coerce')
+        
+        # Temperature Traces (legendgroup 'temp')
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['T1'], name='Ambient Temp', line=dict(color='#ff0000'), legendgroup='temp'), row=1, col=1)
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['T2'], name='Optical Bench Temp', line=dict(color='#00ffff'), legendgroup='temp'), row=1, col=1)
+        
+        # Humidity Traces (legendgroup 'hum')
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['H1'], name='Ambient Humidity', line=dict(color='#ff0000'), legendgroup='hum', showlegend=False), row=2, col=1)
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['H2'], name='Optical Bench Humidity', line=dict(color='#00ffff'), legendgroup='hum', showlegend=False), row=2, col=1)
+        
+        fig.update_layout(**fig_layout, title_text=f"Temperature & Humidity from {start_date_obj} to {end_date_obj}")
+        fig.update_xaxes(title_text=x_axis_title, row=2, col=1)
+
+    elif data_type == 'Lasers_data':
+        fig = make_subplots(rows=4, cols=1, shared_xaxes=True, subplot_titles=('X-Axis (mm)', 'Y-Axis (mm)', 'Z-Axis (mm)', 'D-Axis (mm)'))
+        cols_to_convert = ['X1', 'X2', 'Y1', 'Y2', 'Z1', 'Z2', 'D1', 'D2']
+        df[cols_to_convert] = df[cols_to_convert].apply(pd.to_numeric, errors='coerce')
+
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['X1'], name='X1', line=dict(color='#9eff00')), row=1, col=1)
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['X2'], name='X2', line=dict(color='#00ffff')), row=1, col=1)
+        
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['Y1'], name='Y1', line=dict(color='#9eff00'), showlegend=False), row=2, col=1)
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['Y2'], name='Y2', line=dict(color='#00ffff'), showlegend=False), row=2, col=1)
+        
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['Z1'], name='Z1', line=dict(color='#9eff00'), showlegend=False), row=3, col=1)
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['Z2'], name='Z2', line=dict(color='#00ffff'), showlegend=False), row=3, col=1)
+        
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['D1'], name='D1', line=dict(color='#9eff00'), showlegend=False), row=4, col=1)
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['D2'], name='D2', line=dict(color='#00ffff'), showlegend=False), row=4, col=1)
+        
+        fig.update_layout(**fig_layout, title_text=f"Laser Readings from {start_date_obj} to {end_date_obj}", height=800)
+        fig.update_xaxes(title_text=x_axis_title, row=4, col=1)
+
+    elif data_type == 'Photodiode_data':
+        fig = go.Figure()
+        cols_to_convert = ['P1', 'P2', 'P3', 'P4', 'P5']
+        df[cols_to_convert] = df[cols_to_convert].apply(pd.to_numeric, errors='coerce')
+        
+        colors = {'P1': '#9eff00', 'P2': '#00ffff', 'P3': '#ff9900', 'P4': '#ff00ff', 'P5': '#ffffff'}
+        
+        pd_display_names = {
+            'P1': 'Fiber Output',
+            'P2': 'Grand Detection',
+            'P3': 'AOM 5',
+            'P4': 'AOM 3',
+            'P5': 'AOM 2'
+        }
+
+        for col in cols_to_convert:
+            fig.add_trace(go.Scatter(x=df[x_axis_col], y=df[col], name=pd_display_names.get(col, col), line=dict(color=colors.get(col))))
+        
+        fig.update_layout(**fig_layout, 
+                          title_text=f"Photodiode Readings from {start_date_obj} to {end_date_obj}", 
+                          yaxis_title="Value",
+                          xaxis_title=x_axis_title)
+    
+    else:
+        fig = go.Figure()
+        fig.update_layout(**fig_layout, title_text="Select a valid data type")
+
+    return fig
+
+
+# --- RUN THE APP ---
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8000, debug=True)

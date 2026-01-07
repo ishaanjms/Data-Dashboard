@@ -1,0 +1,264 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+:root {
+  --primary-color: #00ffff;   /* Cyan */
+  --accent-color: #bfff00;    /* Lime */
+  --secondary-color: #ff00ff; /* Magenta */
+  --warning-color: #ff9900;   /* Orange */
+  --success-color: #00ff99;   /* Mint */
+  --bg-dark: #121212;         /* Dark background */
+  --bg-card: #181c20;         /* Card background */
+  --bg-hover: #232323;         /* Hover background */
+  --text-light: #ffffff;      /* White text */
+  --text-muted: #aaaaaa;      /* Muted text */
+  --border-radius: 8px;       /* Consistent border radius */
+  --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Standard, non-glowing shadow */
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-light);
+  transition: all 0.3s ease;
+}
+
+/* Sidebar styling */
+.sidebar {
+  background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(24,28,32,0.9) 100%);
+  border-right: 1px solid rgba(0, 255, 255, 0.2);
+  /* box-shadow removed */
+  transition: all 0.3s ease;
+}
+
+.sidebar-header {
+  font-family: 'Roboto', sans-serif;
+  letter-spacing: 2px;
+  /* text-shadow removed */
+}
+
+.nav-link {
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+  text-decoration: none; /* This line removes the underline */
+}
+
+.nav-link:hover {
+  background-color: rgba(0, 255, 255, 0.1);
+  border-left: 3px solid var(--primary-color);
+  text-decoration: none; /* Also good to add here for consistency */
+}
+
+.nav-link.active {
+  background-color: rgba(0, 255, 255, 0.15);
+  border-left: 3px solid var(--primary-color);
+}
+
+/* Dashboard header */
+.dashboard-header {
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+}
+
+.header-title {
+  font-family: 'Roboto', sans-serif;
+  /* text-shadow removed */
+  letter-spacing: 1px;
+}
+
+/* Cards */
+.sensor-card {
+  background: linear-gradient(145deg, rgba(24, 28, 32, 0.9) 0%, rgba(18, 18, 18, 0.8) 100%);
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow); /* Replaced glowing shadow with standard shadow */
+  padding: 15px;
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.sensor-card:hover {
+  box-shadow: var(--card-shadow); /* Remove lift/hover effect */
+  transform: none;
+}
+
+/* Value displays */
+.value-display {
+  font-family: 'Roboto', sans-serif;
+  letter-spacing: 1px;
+  /* text-shadow removed */
+}
+
+.temp-value {
+  color: var(--warning-color);
+}
+
+.humidity-value {
+  color: var(--primary-color);
+}
+
+/* Graphs */
+.graph-container {
+  background: rgba(24, 28, 32, 0.8);
+  border-radius: var(--border-radius);
+  padding: 15px;
+  box-shadow: var(--card-shadow); /* Replaced glowing shadow with standard shadow */
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  margin-bottom: 20px;
+}
+
+/* Status indicators */
+.status-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.status-connected {
+  background-color: var(--success-color);
+  /* box-shadow removed */
+}
+
+.status-error {
+  background-color: #ff3b30;
+  /* box-shadow removed */
+}
+
+/* Radio buttons */
+.form-check-input:checked {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+/* Animation for value changes */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.value-update {
+  animation: pulse 0.5s ease-out;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(24, 28, 32, 0.8);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2); /* Changed to a neutral gray */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3); /* Changed to a neutral gray */
+}
+
+/* Dark theme styling for date pickers */
+.dark-date-picker .SingleDatePickerInput__withBorder {
+  background: #121212;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 6px;
+}
+
+.dark-date-picker .SingleDatePicker_picker {
+  z-index: 9999; /* ensure calendar sits above other layers */
+}
+
+.dark-date-picker .DateInput_input {
+  background: transparent;
+  color: #ffffff;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+}
+
+.dark-date-picker .DateInput_input__focused {
+  border: 1px solid rgba(158, 255, 0, 0.6);
+}
+
+.dark-date-picker .DayPicker {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  color: #000000;
+}
+
+.dark-date-picker .CalendarMonth_caption {
+  color: #000000;
+}
+
+.dark-date-picker .CalendarMonth_caption strong {
+  color: #000000;
+}
+
+.dark-date-picker .DayPicker_weekHeader {
+  color: #000000;
+}
+
+.dark-date-picker .CalendarDay__default {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  color: #000000;
+}
+
+.dark-date-picker .CalendarDay__default:hover {
+  background: #f5f5f5;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  color: #000000;
+}
+
+.dark-date-picker .CalendarDay__selected,
+.dark-date-picker .CalendarDay__selected:active,
+.dark-date-picker .CalendarDay__selected:hover {
+  background: #9eff00;
+  border: 1px solid #9eff00;
+  color: #000000;
+}
+
+.dark-date-picker .CalendarDay__outside {
+  color: #888888;
+}
+
+.dark-date-picker .DayPickerNavigation_button {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  color: #000000;
+}
+
+.dark-date-picker .DayPickerNavigation_button:hover {
+  background: #f5f5f5;
+}
+
+.retrieve-action-button.plot:hover {
+  background: #6cd3f7 !important;
+  color: #000000 !important;
+  box-shadow: 0 0 12px rgba(70, 191, 240, 0.6);
+}
+
+.retrieve-action-button.download:hover {
+  background: #00ffff !important;
+  color: #000000 !important;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.6);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sidebar.collapsed {
+    width: 60px;
+  }
+  
+  .sidebar.collapsed .nav-link span {
+    display: none;
+  }
+  
+  .main-content.expanded {
+    margin-left: 60px;
+  }
+}
