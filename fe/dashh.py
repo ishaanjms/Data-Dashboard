@@ -64,7 +64,15 @@ def create_sidebar():
             html.Button(
                 id="sidebar-toggle",
                 className="sidebar-toggle",
-                children=html.I(className="fa fa-chevron-left")
+                children=[
+                    # UPDATED: Uses left.svg by default (indicating collapse left)
+                    # Added invert filter to ensure black SVG turns white on dark button
+                    html.Img(
+                        id="toggle-icon", 
+                        src="assets/left.svg", 
+                        style={"width": "12px", "height": "12px", "filter": "invert(1)"}
+                    )
+                ]
             ),
             html.Div(
                 className="nav-links",
@@ -559,7 +567,7 @@ def home_layout():
         ),
 
         # 4. Photodiodes Section (Tier 3)
-        html.Div("Photodiode Output", className="section-label"),
+        html.Div("Photodiodes Output", className="section-label"),
         html.Div(
             className="pd-home-grid",
             children=[
@@ -827,18 +835,22 @@ app.layout = html.Div([
 # Sidebar toggle callback
 @app.callback(
     [Output('sidebar', 'className'),
-     Output('main-content', 'className')],
+     Output('main-content', 'className'),
+     Output('toggle-icon', 'src')],
     [Input('sidebar-toggle', 'n_clicks')],
     [State('sidebar', 'className')]
 )
 def toggle_sidebar(n_clicks, current_class):
     if n_clicks is None:
-        return "sidebar", "main-content"
+        # Default state: Expanded, showing Left Arrow to collapse
+        return "sidebar", "main-content", "assets/left.svg"
     
     if current_class == "sidebar":
-        return "sidebar collapsed", "main-content expanded"
+        # Collapse action: Return collapsed class, show Right Arrow to expand
+        return "sidebar collapsed", "main-content expanded", "assets/right.svg"
     else:
-        return "sidebar", "main-content"
+        # Expand action: Return expanded class, show Left Arrow to collapse
+        return "sidebar", "main-content", "assets/left.svg"
 
 # Navigation callbacks
 @app.callback(
