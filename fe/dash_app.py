@@ -613,93 +613,134 @@ def photodiodes_layout():
 def data_retrieval_layout():
     """Create the Data Retrieval page layout."""
     return html.Div([
-        create_header("Retrieve Data", "Download historical data for analysis"),
+        create_header("Retrieve Data", "Download or plot historical data for analysis"),
         
-        # Data Selection Form
+        # Main Card
         html.Div(
             className="sensor-card",
-            style={"maxWidth": "600px", "margin": "20px auto"},
+            style={"maxWidth": "900px", "margin": "20px auto", "padding": "30px"},
             children=[
-                # Data Type Selection
+                
+                # --- ROW 1: Data Type Selection (Horizontal) ---
                 html.Div(
-                    style={"marginBottom": "20px"},
+                    style={
+                        "display": "flex", 
+                        "alignItems": "center", 
+                        "justifyContent": "space-between", # Pushes label left, buttons right
+                        "marginBottom": "25px",
+                        "flexWrap": "wrap", # responsive wrap
+                        "gap": "15px"
+                    },
                     children=[
-                        html.Label("Select Data Type:", style={"display": "block", "marginBottom": "10px"}),
+                        # Label
+                        html.Label("1. Data Source", className="control-label", style={"marginBottom": "0", "minWidth": "120px"}),
+                        
+                        # Radio Buttons (Now sits next to label)
                         dcc.RadioItems(
                             id="data-type-selector",
                             options=[
-                                {'label': 'Temperature & Humidity', 'value': 'Temp_Humidity_data'},
-                                {'label': 'Lasers', 'value': 'Lasers_data'},
-                                {'label': 'Photodiode', 'value': 'Photodiode_data'}
+                                {'label': ' Temp & Humidity', 'value': 'Temp_Humidity_data'},
+                                {'label': ' Lasers', 'value': 'Lasers_data'},
+                                {'label': ' Photodiode', 'value': 'Photodiode_data'}
                             ],
                             value='Temp_Humidity_data',
+                            style={"display": "flex", "gap": "20px"},
                             labelStyle={
-                                "marginRight": "20px",
                                 "cursor": "pointer",
-                                "display": "block",
-                                "marginBottom": "10px"
+                                "display": "flex",
+                                "alignItems": "center",
+                                "fontWeight": "400",
+                                "color": "#e0e0e0"
                             },
-                            inputStyle={"marginRight": "5px"},
+                            inputStyle={"marginRight": "8px", "accentColor": "#00ADB5"},
                         ),
                     ]
                 ),
                 
-                # Date Range Selection
+                # Divider
+                html.Hr(style={"borderColor": "rgba(255,255,255,0.05)", "margin": "0 0 25px 0"}),
+
+                # --- ROW 2: Date Range Selection (Horizontal) ---
                 html.Div(
-                    style={"marginBottom": "20px"},
+                    style={
+                        "display": "flex", 
+                        "alignItems": "center", 
+                        "justifyContent": "space-between",
+                        "marginBottom": "30px",
+                        "flexWrap": "wrap",
+                        "gap": "15px"
+                    },
                     children=[
-                        html.Label("Select Date Range:", style={"display": "block", "marginBottom": "10px"}),
+                        # Label
+                        html.Label("2. Time Period", className="control-label", style={"marginBottom": "0", "minWidth": "120px"}),
+                        
+                        # Date Controls Group
                         html.Div(
-                            style={"display": "flex", "gap": "20px"},
+                            style={"display": "flex", "alignItems": "center", "gap": "10px", "flex": "1", "justifyContent": "flex-end"},
                             children=[
+                                # Start Date
+                                html.Span("From", style={"color": "#666", "fontSize": "0.9rem", "marginRight": "5px"}),
                                 html.Div(
-                                    style={"flex": "1"},
-                                    children=[
-                                        html.Label("Start Date", style={"fontSize": "0.8rem", "color": "#aaaaaa"}),
-                                        dcc.DatePickerSingle(
-                                            id='start-date-picker',
-                                            date=datetime.now().date(),
-                                            display_format='YYYY-MM-DD',
-                                            style={"width": "100%"}
-                                        )
-                                    ]
+                                    style={"width": "140px"}, # Fixed width for consistency
+                                    children=dcc.DatePickerSingle(
+                                        id='start-date-picker',
+                                        date=datetime.now().date(),
+                                        display_format='YYYY-MM-DD',
+                                        placeholder='Start Date',
+                                        className="dark-date-picker",
+                                        style={"width": "100%"}
+                                    )
                                 ),
+                                
+                                # Arrow Icon
+                                html.I(className="fa fa-arrow-right", style={"color": "#444", "margin": "0 10px"}),
+
+                                # End Date
+                                html.Span("To", style={"color": "#666", "fontSize": "0.9rem", "marginRight": "5px"}),
                                 html.Div(
-                                    style={"flex": "1"},
-                                    children=[
-                                        html.Label("End Date", style={"fontSize": "0.8rem", "color": "#aaaaaa"}),
-                                        dcc.DatePickerSingle(
-                                            id='end-date-picker',
-                                            date=datetime.now().date(),
-                                            display_format='YYYY-MM-DD',
-                                            style={"width": "100%"}
-                                        )
-                                    ]
+                                    style={"width": "140px"}, # Fixed width for consistency
+                                    children=dcc.DatePickerSingle(
+                                        id='end-date-picker',
+                                        date=datetime.now().date(),
+                                        display_format='YYYY-MM-DD',
+                                        placeholder='End Date',
+                                        style={"width": "100%"}
+                                    )
                                 )
                             ]
                         )
                     ]
                 ),
                 
-                # Download Button
-                html.Button(
-                    id="download-button",
-                    children="Download CSV",
-                    style={
-                        "backgroundColor": "#00ffff",
-                        "border": "none",
-                        "color": "#000000",
-                        "padding": "10px 20px",
-                        "borderRadius": "5px",
-                        "fontSize": "1rem",
-                        "fontWeight": "bold",
-                        "cursor": "pointer",
-                        "width": "100%",
-                        "transition": "all 0.3s",
-                        "boxShadow": "0 0 10px rgba(0,255,255,0.5)"
-                    }
+                # --- ROW 3: Action Buttons ---
+                html.Div(
+                    style={"display": "flex", "gap": "15px"},
+                    children=[
+                        html.Button(
+                            id="plot-button",
+                            className="retrieve-action-button btn-primary",
+                            children=[html.Span("PLOT DATA", style={"position": "relative", "top": "1px"})],
+                            style={"flex": "3", "padding": "12px", "borderRadius": "4px"} # Plot button takes 75% width
+                        ),
+                        html.Button(
+                            id="download-button",
+                            className="retrieve-action-button btn-secondary",
+                            children=[html.I(className="fa fa-download", style={"marginRight": "8px"}), "CSV"],
+                            style={"flex": "1", "padding": "12px", "borderRadius": "4px"} # Download takes 25% width
+                        ),
+                    ]
                 ),
                 dcc.Download(id="download-data")
+            ]
+        ),
+        
+        # Historical Plot Area (Unchanged)
+        html.Div(
+            id="historical-plot-container",
+            className="graph-container",
+            style={"marginTop": "20px"},
+            children=[
+                dcc.Graph(id="historical-data-graph", style={"height": "600px"})
             ]
         )
     ])
