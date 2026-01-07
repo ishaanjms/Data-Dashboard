@@ -31,6 +31,10 @@ REFRESH_INTERVAL_SECONDS = 10
 MAX_POINTS = 50
 CURRENT_DATETIME = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+# --- COLOR PALETTE DEFINITION ---
+COLOR_PRIMARY = "#00ADB5"  # Teal (Cool)
+COLOR_SECONDARY = "#FFCA28" # Amber (Warm) - Replaces the neon green
+
 # Initialize the app
 app = dash.Dash(
     __name__, 
@@ -40,7 +44,7 @@ app = dash.Dash(
     suppress_callback_exceptions=True  # Suppress exceptions for components not in the initial layout
 )
 
-app.index_string = design_string() #
+app.index_string = design_string() 
 server = app.server
 
 # Define reusable components for modular design
@@ -55,7 +59,8 @@ def create_sidebar():
                 children=[
                     html.H2("CsF1", style={"margin": "10px 0", "color": "#00ffff"}),
                 ],
-                style={"display": "flex", "alignItems": "center", "justifyContent": "center", "padding": "20px", "borderBottom": "1px solid #00ffff30"}
+                # UPDATED: Removed 'borderBottom' to remove the line above Overview
+                style={"display": "flex", "alignItems": "center", "justifyContent": "center", "padding": "20px"}
             ),
             html.Button(
                 id="sidebar-toggle",
@@ -67,15 +72,18 @@ def create_sidebar():
                 children=[
                     # --- 1. OVERVIEW (HOME) ---
                     html.A(
-                        className="nav-link active", # Default active
+                        className="nav-link active", 
                         id="home-link",
                         href="#",
                         children=[
-                            # Make sure 'Home.svg' is exactly the name in your assets folder
                             html.Img(src="assets/Home.svg", alt="Home"), 
                             html.Span("Overview")
                         ]
                     ),
+                    
+                    # --- NEW SEPARATOR LINE ---
+                    # This puts a line between Overview and Temp & Humidity
+                    html.Hr(style={'borderColor': 'rgba(255, 255, 255, 0.1)', 'margin': '5px 15px 15px 15px'}),
                     
                     # --- 2. TEMP & HUMIDITY ---
                     html.A(
@@ -83,7 +91,6 @@ def create_sidebar():
                         id="temp-humidity-link",
                         href="#",
                         children=[
-                            # Assuming you have Temperature.svg
                             html.Img(src="assets/Temperature.svg", alt="Temp"),
                             html.Span("Temperature & Humidity")
                         ]
@@ -95,7 +102,6 @@ def create_sidebar():
                         id="laser-link",
                         href="#",
                         children=[
-                            # Assuming you have Laser.svg
                             html.Img(src="assets/Laser.svg", alt="Laser"),
                             html.Span("Lasers")
                         ]
@@ -107,12 +113,12 @@ def create_sidebar():
                         id="photodiode-link",
                         href="#",
                         children=[
-                            # Assuming you have Photodiode.svg
                             html.Img(src="assets/Photodiode.svg", alt="PD"),
                             html.Span("Photodiodes")
                         ]
                     ),
                     
+                    # Existing Separator for Retrieve Data
                     html.Hr(style={'borderColor': 'rgba(255, 255, 255, 0.1)', 'margin': '15px 10px'}),
                     
                     # --- 5. RETRIEVE DATA ---
@@ -121,22 +127,18 @@ def create_sidebar():
                         id="data-retrieval-link",
                         href="#",
                         children=[
-                            # Assuming you have Download.svg
                             html.Img(src="assets/Download.svg", alt="Download"),
                             html.Span("Retrieve Data")
                         ]
                     ),
                 ],
-                style={"marginTop": "20px"}
+                style={"marginTop": "10px"} # Reduced margin slightly since header border is gone
             ),
         ]
     )
 
 def create_header(title, subtitle, status_id="connection-text"):
-    """
-    Create a header component.
-    Added 'status_id' parameter to prevent duplicate output errors on different pages.
-    """
+    """Create a header component with title and subtitle."""
     return html.Div(
         className="dashboard-header",
         children=[
@@ -147,28 +149,9 @@ def create_header(title, subtitle, status_id="connection-text"):
                 className="connection-status",
                 children=[
                     html.Span(className="status-indicator status-connected"),
-                    # Use the dynamic ID here
                     html.Span(id=status_id, children=f"Connected | Last Update: {CURRENT_DATETIME}")
                 ],
                 style={"textAlign": "right", "fontSize": "0.8rem"}
-            )
-        ]
-    )
-
-def create_sensor_value_card(title, value, unit, color):
-    """Create a card displaying a sensor value with styling."""
-    return html.Div(
-        className="sensor-card",
-        children=[
-            html.H3(title, style={"textAlign": "center", "color": "#ffffff"}),
-            html.Div(
-                className="value-display",
-                style={"color": color},
-                children=value
-            ),
-            html.Div(
-                style={"textAlign": "center", "color": "#aaaaaa"},
-                children=unit
             )
         ]
     )
@@ -217,7 +200,7 @@ def temp_humidity_layout():
         # Current Values Section
         html.Div(
             className="row",
-            style={"display": "flex", "justifyContent": "space-around", "gap": "20px"}, # Added gap for spacing between cards
+            style={"display": "flex", "justifyContent": "space-around", "gap": "20px"},
             children=[
                 # AMBIENT SENSOR CARD
                 html.Div(
@@ -249,7 +232,7 @@ def temp_humidity_layout():
                                             ]
                                         ),
                                         
-                                        # Vertical Divider Line (Optional visual separator)
+                                        # Vertical Divider Line
                                         html.Div(style={"width": "1px", "height": "50px", "backgroundColor": "rgba(255,255,255,0.1)"}),
 
                                         # RIGHT SIDE: Humidity
@@ -387,8 +370,7 @@ def lasers_layout():
                     className="axis-header",
                     children=[
                         html.H3(f"{axis_name} Axis", className="axis-title"),
-                        # Optional: Add a small status dot or icon here if needed
-                        html.Div(style={"width": "10px", "height": "10px", "borderRadius": "50%", "background": "#00ADB5"}) 
+                        # UPDATED: Removed the green/cyan status dot div from here
                     ]
                 ),
                 
@@ -456,17 +438,17 @@ def lasers_layout():
                 "padding": "0 20px"
             },
             children=[
-                # X Axis Card
-                create_axis_card("X", "X1", "x1-value", "#9eff00", "X2", "x2-value", "#00ADB5", "x-axis-graph"),
+                # X Axis Card - Using COLOR_SECONDARY (Amber) instead of Green
+                create_axis_card("X", "X1", "x1-value", COLOR_SECONDARY, "X2", "x2-value", COLOR_PRIMARY, "x-axis-graph"),
                 
                 # Y Axis Card
-                create_axis_card("Y", "Y1", "y1-value", "#9eff00", "Y2", "y2-value", "#00ADB5", "y-axis-graph"),
+                create_axis_card("Y", "Y1", "y1-value", COLOR_SECONDARY, "Y2", "y2-value", COLOR_PRIMARY, "y-axis-graph"),
                 
                 # Z Axis Card
-                create_axis_card("Z", "Z1", "z1-value", "#9eff00", "Z2", "z2-value", "#00ADB5", "z-axis-graph"),
+                create_axis_card("Z", "Z1", "z1-value", COLOR_SECONDARY, "Z2", "z2-value", COLOR_PRIMARY, "z-axis-graph"),
                 
                 # D Axis Card
-                create_axis_card("D", "D1", "d1-value", "#9eff00", "D2", "d2-value", "#00ADB5", "d-axis-graph"),
+                create_axis_card("D", "D1", "d1-value", COLOR_SECONDARY, "D2", "d2-value", COLOR_PRIMARY, "d-axis-graph"),
             ]
         ),
         
@@ -479,25 +461,27 @@ def lasers_layout():
     ])
 
 def home_layout():
-    """The Executive Summary Page."""
+    """
+    The Executive Summary Page.
+    Updated: Removed green dots, Standardized Header, New Date Format.
+    """
     return html.Div([
         
-        # Pass a UNIQUE ID ('home-status-text') to prevent conflict with other pages
+        # 1. Standard Header (Replaces the old 'System Nominal' bar)
         create_header("System Status", "Overview of all laboratory subsystems", status_id="home-status-text"),
 
-        # ... (Rest of the layout remains exactly the same) ...
         # 2. Environmental Section (Tier 1)
         html.Div("Environmental Conditions", className="section-label"),
         html.Div(
             className="env-grid",
             children=[
-                # ... (Keep existing code) ...
-                # Ambient Card
+                # Ambient Card (Dots removed)
                 html.Div(
                     className="home-stat-card",
                     children=[
                         html.Div(className="card-header-row", children=[
                             html.Div("Ambient Lab", className="card-title"),
+                            # Dot removed here
                         ]),
                         html.Div([
                             html.Span(id="home-temp1", className="card-value", children="--.-"),
@@ -528,62 +512,73 @@ def home_layout():
                 )
             ]
         ),
-        # ... (Keep Lasers and Photodiode sections as they were) ...
+
+        # 3. Lasers Section (Tier 2)
         html.Div("Laser Position System", className="section-label"),
         html.Div(
             className="laser-grid",
             children=[
                 # X Axis
                 html.Div(className="home-stat-card", children=[
-                    html.Div(className="card-header-row", children=[html.Div("X Axis", className="card-title")]),
+                    html.Div(className="card-header-row", children=[
+                        html.Div("X Axis", className="card-title"),
+                    ]),
+                    # Using COLOR_SECONDARY (Amber)
                     html.Div(className="sub-metric-row", style={"borderTop": "none", "marginTop": "0"}, children=[
-                        html.Span("X1", className="sub-label", style={"color": "#9eff00"}),
+                        html.Span("X1", className="sub-label", style={"color": COLOR_SECONDARY}),
                         html.Span(id="home-x1", className="sub-val", children="-.----")
                     ]),
                     html.Div(className="sub-metric-row", children=[
-                        html.Span("X2", className="sub-label", style={"color": "#00ADB5"}),
+                        html.Span("X2", className="sub-label", style={"color": COLOR_PRIMARY}),
                         html.Span(id="home-x2", className="sub-val", children="-.----")
                     ])
                 ]),
                 # Y Axis
                 html.Div(className="home-stat-card", children=[
-                    html.Div(className="card-header-row", children=[html.Div("Y Axis", className="card-title")]),
+                    html.Div(className="card-header-row", children=[
+                        html.Div("Y Axis", className="card-title"),
+                    ]),
                     html.Div(className="sub-metric-row", style={"borderTop": "none", "marginTop": "0"}, children=[
-                        html.Span("Y1", className="sub-label", style={"color": "#9eff00"}),
+                        html.Span("Y1", className="sub-label", style={"color": COLOR_SECONDARY}),
                         html.Span(id="home-y1", className="sub-val", children="-.----")
                     ]),
                     html.Div(className="sub-metric-row", children=[
-                        html.Span("Y2", className="sub-label", style={"color": "#00ADB5"}),
+                        html.Span("Y2", className="sub-label", style={"color": COLOR_PRIMARY}),
                         html.Span(id="home-y2", className="sub-val", children="-.----")
                     ])
                 ]),
                 # Z Axis
                 html.Div(className="home-stat-card", children=[
-                    html.Div(className="card-header-row", children=[html.Div("Z Axis", className="card-title")]),
+                    html.Div(className="card-header-row", children=[
+                        html.Div("Z Axis", className="card-title"),
+                    ]),
                     html.Div(className="sub-metric-row", style={"borderTop": "none", "marginTop": "0"}, children=[
-                        html.Span("Z1", className="sub-label", style={"color": "#9eff00"}),
+                        html.Span("Z1", className="sub-label", style={"color": COLOR_SECONDARY}),
                         html.Span(id="home-z1", className="sub-val", children="-.----")
                     ]),
                     html.Div(className="sub-metric-row", children=[
-                        html.Span("Z2", className="sub-label", style={"color": "#00ADB5"}),
+                        html.Span("Z2", className="sub-label", style={"color": COLOR_PRIMARY}),
                         html.Span(id="home-z2", className="sub-val", children="-.----")
                     ])
                 ]),
                 # D Axis
                 html.Div(className="home-stat-card", children=[
-                    html.Div(className="card-header-row", children=[html.Div("D Axis", className="card-title")]),
+                    html.Div(className="card-header-row", children=[
+                        html.Div("D Axis", className="card-title"),
+                    ]),
                     html.Div(className="sub-metric-row", style={"borderTop": "none", "marginTop": "0"}, children=[
-                        html.Span("D1", className="sub-label", style={"color": "#9eff00"}),
+                        html.Span("D1", className="sub-label", style={"color": COLOR_SECONDARY}),
                         html.Span(id="home-d1", className="sub-val", children="-.----")
                     ]),
                     html.Div(className="sub-metric-row", children=[
-                        html.Span("D2", className="sub-label", style={"color": "#00ADB5"}),
+                        html.Span("D2", className="sub-label", style={"color": COLOR_PRIMARY}),
                         html.Span(id="home-d2", className="sub-val", children="-.----")
                     ])
                 ])
             ]
         ),
 
+        # 4. Photodiodes Section (Tier 3)
         html.Div("Optical Output (Photodiodes)", className="section-label"),
         html.Div(
             className="pd-home-grid",
@@ -611,7 +606,12 @@ def home_layout():
             ]
         ),
         
-        dcc.Interval(id='home-interval', interval=REFRESH_INTERVAL_SECONDS * 1000, n_intervals=0)
+        # Universal Interval for Home Page
+        dcc.Interval(
+            id='home-interval',
+            interval=REFRESH_INTERVAL_SECONDS * 1000,
+            n_intervals=0
+        )
     ])
 
 def photodiodes_layout():
@@ -733,7 +733,7 @@ def data_retrieval_layout():
                                 "fontWeight": "400",
                                 "color": "#e0e0e0"
                             },
-                            inputStyle={"marginRight": "8px", "accentColor": "#00ADB5"},
+                            inputStyle={"marginRight": "8px", "accentColor": COLOR_PRIMARY},
                         ),
                     ]
                 ),
@@ -828,9 +828,8 @@ def data_retrieval_layout():
 
 
 # Define the main layout with URL routing
-# Define the main layout with URL routing
 app.layout = html.Div([
-    # Store current page - Initialize as 'home'
+    # Store current page
     dcc.Store(id='current-page', data='home'),
     
     # Main components
@@ -839,7 +838,6 @@ app.layout = html.Div([
     html.Div(
         id="main-content",
         className="main-content",
-        # Initialize with home_layout()
         children=[home_layout()]
     )
 ])
@@ -866,12 +864,12 @@ def toggle_sidebar(n_clicks, current_class):
 @app.callback(
     [Output('main-content', 'children'),
      Output('current-page', 'data'),
-     Output('home-link', 'className'),          # ADDED THIS OUTPUT
+     Output('home-link', 'className'),
      Output('temp-humidity-link', 'className'),
      Output('laser-link', 'className'),
      Output('photodiode-link', 'className'),
      Output('data-retrieval-link', 'className')],
-    [Input('home-link', 'n_clicks'),            # ADDED THIS INPUT
+    [Input('home-link', 'n_clicks'),
      Input('temp-humidity-link', 'n_clicks'),
      Input('laser-link', 'n_clicks'),
      Input('photodiode-link', 'n_clicks'),
@@ -881,7 +879,7 @@ def toggle_sidebar(n_clicks, current_class):
 def navigate_pages(home_click, temp_click, laser_click, photodiode_click, data_click, current_page):
     ctx = callback_context
     
-    # Default State (Home Page Active)
+    # Default State (Home Page)
     default_return = (home_layout(), 'home', 'nav-link active', 'nav-link', 'nav-link', 'nav-link', 'nav-link')
 
     if not ctx.triggered:
@@ -889,7 +887,6 @@ def navigate_pages(home_click, temp_click, laser_click, photodiode_click, data_c
     
     button_id = ctx.triggered[0]['prop_id'].split('.')[0]
     
-    # Reset all classes
     inactive = 'nav-link'
     active = 'nav-link active'
 
@@ -905,7 +902,6 @@ def navigate_pages(home_click, temp_click, laser_click, photodiode_click, data_c
         return data_retrieval_layout(), 'data-retrieval', inactive, inactive, inactive, inactive, active
     
     return default_return
-
 
 # Temperature & Humidity callbacks
 @app.callback(
@@ -1035,6 +1031,7 @@ def update_temp_humidity(n, temp_sensor, humidity_sensor, current_page):
     return temp1, hum1, temp2, hum2, temp_fig, hum_fig, connection_text
 
 
+# --- UPDATED CALLBACK FOR HOME (WITH NEW COLOR) ---
 @app.callback(
     [Output('home-temp1', 'children'), Output('home-hum1', 'children'),
      Output('home-temp2', 'children'), Output('home-hum2', 'children'),
@@ -1045,22 +1042,20 @@ def update_temp_humidity(n, temp_sensor, humidity_sensor, current_page):
      Output('home-p1', 'children'), Output('home-p2', 'children'),
      Output('home-p3', 'children'), Output('home-p4', 'children'),
      Output('home-p5', 'children'), 
-     # CHANGED THIS LINE: Targeting the new unique ID
      Output('home-status-text', 'children')],
     [Input('home-interval', 'n_intervals')],
     [State('current-page', 'data')]
 )
 def update_home_dashboard(n, current_page):
-    # ... (Keep the rest of your function logic exactly the same) ...
     if current_page != 'home':
         raise PreventUpdate
 
+    # Date Format Logic
     now = datetime.now()
     date_str = now.strftime("%d %B, %Y").lstrip('0') 
     time_str = now.strftime("%H:%M:%S")
     header_status = f"{date_str} | {time_str}"
 
-    # ... (Fetching data logic remains same) ...
     # 1. Get Temp Data
     t_data = get_latest_temp_humidity(os.path.join(DATASET_BASE_DIR, 'Temp_Humidity_data'))
     t1 = f"{t_data['temp1']:.2f}" if t_data else "--"
@@ -1088,6 +1083,8 @@ def update_home_dashboard(n, current_page):
     p5 = f"{p_data.get('P5', 0):.2f}" if p_data else "--"
 
     return (t1, h1, t2, h2, x1, x2, y1, y2, z1, z2, d1, d2, p1, p2, p3, p4, p5, header_status)
+
+
 
 # Lasers callbacks
 @app.callback(
@@ -1160,14 +1157,14 @@ def update_lasers(n, current_page):
         y=plot_data['X1'],
         mode='lines',
         name='X1',
-        line=dict(color='#9eff00', width=2)
+        line=dict(color=COLOR_SECONDARY, width=2) # AMBER
     ))
     x_fig.add_trace(go.Scatter(
         x=plot_data['time_points'],
         y=plot_data['X2'],
         mode='lines',
         name='X2',
-        line=dict(color='#00ffff', width=2)
+        line=dict(color=COLOR_PRIMARY, width=2) # TEAL
     ))
     
     # Create Y axis graph
@@ -1177,14 +1174,14 @@ def update_lasers(n, current_page):
         y=plot_data['Y1'],
         mode='lines',
         name='Y1',
-        line=dict(color='#9eff00', width=2)
+        line=dict(color=COLOR_SECONDARY, width=2)
     ))
     y_fig.add_trace(go.Scatter(
         x=plot_data['time_points'],
         y=plot_data['Y2'],
         mode='lines',
         name='Y2',
-        line=dict(color='#00ffff', width=2)
+        line=dict(color=COLOR_PRIMARY, width=2)
     ))
     
     # Create Z axis graph
@@ -1194,14 +1191,14 @@ def update_lasers(n, current_page):
         y=plot_data['Z1'],
         mode='lines',
         name='Z1',
-        line=dict(color='#9eff00', width=2)
+        line=dict(color=COLOR_SECONDARY, width=2)
     ))
     z_fig.add_trace(go.Scatter(
         x=plot_data['time_points'],
         y=plot_data['Z2'],
         mode='lines',
         name='Z2',
-        line=dict(color='#00ffff', width=2)
+        line=dict(color=COLOR_PRIMARY, width=2)
     ))
     
     # Create D axis graph
@@ -1211,14 +1208,14 @@ def update_lasers(n, current_page):
         y=plot_data['D1'],
         mode='lines',
         name='D1',
-        line=dict(color='#9eff00', width=2)
+        line=dict(color=COLOR_SECONDARY, width=2)
     ))
     d_fig.add_trace(go.Scatter(
         x=plot_data['time_points'],
         y=plot_data['D2'],
         mode='lines',
         name='D2',
-        line=dict(color='#00ffff', width=2)
+        line=dict(color=COLOR_PRIMARY, width=2)
     ))
     
     return x1, x2, y1, y2, z1, z2, d1, d2, x_fig, y_fig, z_fig, d_fig
@@ -1246,10 +1243,10 @@ def update_lasers(n, current_page):
 def toggle_photodiodes(btn1, btn2, btn3, btn4, btn5, active_pds):
     ctx = callback_context
     
-    # Define the colors for each sensor (matching your graph)
+    # UPDATED COLORS: Used Amber instead of neon green for P1
     colors = {
-        'P1': '#9eff00', # Green
-        'P2': '#00ffff', # Cyan
+        'P1': COLOR_SECONDARY, # Amber
+        'P2': COLOR_PRIMARY,   # Teal
         'P3': '#ff9900', # Orange
         'P4': '#ff00ff', # Pink
         'P5': '#ffffff'  # White
@@ -1368,12 +1365,13 @@ def update_photodiode_graph(n, active_pds, current_page):
         ),
     )
     
+    # UPDATED COLORS: Using Amber for P1
     colors = {
-        'P1': '#9eff00',
-        'P2': '#00ffff',
-        'P3': '#ff9900',
-        'P4': '#ff00ff',
-        'P5': '#ffffff'
+        'P1': COLOR_SECONDARY, # Amber
+        'P2': COLOR_PRIMARY,   # Teal
+        'P3': '#ff9900', # Orange
+        'P4': '#ff00ff', # Pink
+        'P5': '#ffffff'  # White
     }
     
     pd_display_names = {
@@ -1542,11 +1540,11 @@ def update_historical_graph(n_clicks, data_type, start_date, end_date):
         
         # Temperature Traces (legendgroup 'temp')
         fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['T1'], name='Ambient Temp', line=dict(color='#ff0000'), legendgroup='temp'), row=1, col=1)
-        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['T2'], name='Optical Bench Temp', line=dict(color='#00ffff'), legendgroup='temp'), row=1, col=1)
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['T2'], name='Optical Bench Temp', line=dict(color=COLOR_PRIMARY), legendgroup='temp'), row=1, col=1)
         
         # Humidity Traces (legendgroup 'hum')
         fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['H1'], name='Ambient Humidity', line=dict(color='#ff0000'), legendgroup='hum', showlegend=False), row=2, col=1)
-        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['H2'], name='Optical Bench Humidity', line=dict(color='#00ffff'), legendgroup='hum', showlegend=False), row=2, col=1)
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['H2'], name='Optical Bench Humidity', line=dict(color=COLOR_PRIMARY), legendgroup='hum', showlegend=False), row=2, col=1)
         
         fig.update_layout(**fig_layout, title_text=f"Temperature & Humidity from {start_date_obj} to {end_date_obj}")
         fig.update_xaxes(title_text=x_axis_title, row=2, col=1)
@@ -1556,17 +1554,18 @@ def update_historical_graph(n_clicks, data_type, start_date, end_date):
         cols_to_convert = ['X1', 'X2', 'Y1', 'Y2', 'Z1', 'Z2', 'D1', 'D2']
         df[cols_to_convert] = df[cols_to_convert].apply(pd.to_numeric, errors='coerce')
 
-        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['X1'], name='X1', line=dict(color='#9eff00')), row=1, col=1)
-        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['X2'], name='X2', line=dict(color='#00ffff')), row=1, col=1)
+        # Updated colors in historical plot too
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['X1'], name='X1', line=dict(color=COLOR_SECONDARY)), row=1, col=1)
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['X2'], name='X2', line=dict(color=COLOR_PRIMARY)), row=1, col=1)
         
-        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['Y1'], name='Y1', line=dict(color='#9eff00'), showlegend=False), row=2, col=1)
-        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['Y2'], name='Y2', line=dict(color='#00ffff'), showlegend=False), row=2, col=1)
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['Y1'], name='Y1', line=dict(color=COLOR_SECONDARY), showlegend=False), row=2, col=1)
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['Y2'], name='Y2', line=dict(color=COLOR_PRIMARY), showlegend=False), row=2, col=1)
         
-        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['Z1'], name='Z1', line=dict(color='#9eff00'), showlegend=False), row=3, col=1)
-        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['Z2'], name='Z2', line=dict(color='#00ffff'), showlegend=False), row=3, col=1)
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['Z1'], name='Z1', line=dict(color=COLOR_SECONDARY), showlegend=False), row=3, col=1)
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['Z2'], name='Z2', line=dict(color=COLOR_PRIMARY), showlegend=False), row=3, col=1)
         
-        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['D1'], name='D1', line=dict(color='#9eff00'), showlegend=False), row=4, col=1)
-        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['D2'], name='D2', line=dict(color='#00ffff'), showlegend=False), row=4, col=1)
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['D1'], name='D1', line=dict(color=COLOR_SECONDARY), showlegend=False), row=4, col=1)
+        fig.add_trace(go.Scatter(x=df[x_axis_col], y=df['D2'], name='D2', line=dict(color=COLOR_PRIMARY), showlegend=False), row=4, col=1)
         
         fig.update_layout(**fig_layout, title_text=f"Laser Readings from {start_date_obj} to {end_date_obj}", height=800)
         fig.update_xaxes(title_text=x_axis_title, row=4, col=1)
@@ -1576,7 +1575,7 @@ def update_historical_graph(n_clicks, data_type, start_date, end_date):
         cols_to_convert = ['P1', 'P2', 'P3', 'P4', 'P5']
         df[cols_to_convert] = df[cols_to_convert].apply(pd.to_numeric, errors='coerce')
         
-        colors = {'P1': '#9eff00', 'P2': '#00ffff', 'P3': '#ff9900', 'P4': '#ff00ff', 'P5': '#ffffff'}
+        colors = {'P1': COLOR_SECONDARY, 'P2': COLOR_PRIMARY, 'P3': '#ff9900', 'P4': '#ff00ff', 'P5': '#ffffff'}
         
         pd_display_names = {
             'P1': 'Fiber Output',
