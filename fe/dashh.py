@@ -140,13 +140,20 @@ def create_sidebar():
         ]
     )
 
-def create_header(title, subtitle, status_id="connection-text"):
-    """Create a header component with title and subtitle."""
-    return html.Div(
-        className="dashboard-header",
-        children=[
-            html.H1(title, className="header-title"),
-            html.P(subtitle, className="header-subtitle"),
+# --- UPDATED HEADER FUNCTION ---
+def create_header(title, subtitle, status_id="connection-text", show_status=True):
+    """
+    Create a header component with title and subtitle.
+    Added 'show_status' parameter to optionally hide the connection text.
+    """
+    header_children = [
+        html.H1(title, className="header-title"),
+        html.P(subtitle, className="header-subtitle"),
+    ]
+    
+    # Only append the status div if show_status is True
+    if show_status:
+        header_children.append(
             html.Div(
                 id="connection-status",
                 className="connection-status",
@@ -156,7 +163,11 @@ def create_header(title, subtitle, status_id="connection-text"):
                 ],
                 style={"textAlign": "right", "fontSize": "0.8rem"}
             )
-        ]
+        )
+
+    return html.Div(
+        className="dashboard-header",
+        children=header_children
     )
 
 def create_graph_card(id, title):
@@ -177,7 +188,7 @@ def create_graph_card(id, title):
 def temp_humidity_layout():
     """Create the Temperature & Humidity page layout."""
     return html.Div([
-        create_header("Temperature & Humidity", "Real-time Monitoring Dashboard"),
+        create_header("Temperature & Humidity", "Real Time Fluke1620A Data"),
         
         # Current Values Section
         html.Div(
@@ -433,7 +444,7 @@ def home_layout():
     return html.Div([
         
         # 1. Standard Header (Replaces the old 'System Nominal' bar)
-        create_header("System Status", "Overview of all Subsystems", status_id="home-status-text"),
+        create_header("System Status", "Overview of all laboratory subsystems", status_id="home-status-text"),
 
         # 2. Environmental Section (Tier 1)
         html.Div("Environmental Conditions", className="section-label"),
@@ -479,7 +490,7 @@ def home_layout():
         ),
 
         # 3. Lasers Section (Tier 2)
-        html.Div("Laser System", className="section-label"),
+        html.Div("Laser Position System", className="section-label"),
         html.Div(
             className="laser-grid",
             children=[
@@ -544,7 +555,7 @@ def home_layout():
         ),
 
         # 4. Photodiodes Section (Tier 3)
-        html.Div("Photodiodes", className="section-label"),
+        html.Div("Optical Output (Photodiodes)", className="section-label"),
         html.Div(
             className="pd-home-grid",
             children=[
@@ -583,7 +594,6 @@ def photodiodes_layout():
     """Create the Photodiodes page layout."""
     return html.Div([
         create_header("Photodiodes", "Real-time Photodiode Monitoring"),
-        
         
         # Photodiode Selection Section
         html.Div(
@@ -666,12 +676,12 @@ def photodiodes_layout():
 def data_retrieval_layout():
     """Create the Data Retrieval page layout."""
     return html.Div([
-        create_header("Retrieve Data", "Download or plot historical data for analysis"),
+        # HIDDEN STATUS: show_status=False
+        create_header("Retrieve Data", "Download or plot historical data for analysis", show_status=False),
         
         # Main Card
         html.Div(
             className="sensor-card",
-            # Updated style: Matches the margins of your other graph containers
             style={"margin": "20px", "padding": "30px"},
             children=[
                 
@@ -687,7 +697,7 @@ def data_retrieval_layout():
                     },
                     children=[
                         # Label
-                        html.Label("Data Source", className="control-label", style={"marginBottom": "0", "minWidth": "120px"}),
+                        html.Label("1. Data Source", className="control-label", style={"marginBottom": "0", "minWidth": "120px"}),
                         
                         # Radio Buttons (Now sits next to label)
                         dcc.RadioItems(
@@ -726,7 +736,7 @@ def data_retrieval_layout():
                     },
                     children=[
                         # Label
-                        html.Label("Time Period", className="control-label", style={"marginBottom": "0", "minWidth": "120px"}),
+                        html.Label("2. Time Period", className="control-label", style={"marginBottom": "0", "minWidth": "120px"}),
                         
                         # Date Controls Group
                         html.Div(
