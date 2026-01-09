@@ -433,7 +433,7 @@ def home_layout():
     return html.Div([
         
         # 1. Standard Header (Replaces the old 'System Nominal' bar)
-        create_header("System Status", "Overview of all laboratory subsystems", status_id="home-status-text"),
+        create_header("System Status", "Overview of all Subsystems", status_id="home-status-text"),
 
         # 2. Environmental Section (Tier 1)
         html.Div("Environmental Conditions", className="section-label"),
@@ -479,7 +479,7 @@ def home_layout():
         ),
 
         # 3. Lasers Section (Tier 2)
-        html.Div("Laser Position System", className="section-label"),
+        html.Div("Laser System", className="section-label"),
         html.Div(
             className="laser-grid",
             children=[
@@ -544,7 +544,7 @@ def home_layout():
         ),
 
         # 4. Photodiodes Section (Tier 3)
-        html.Div("Optical Output (Photodiodes)", className="section-label"),
+        html.Div("Photodiodes", className="section-label"),
         html.Div(
             className="pd-home-grid",
             children=[
@@ -584,50 +584,57 @@ def photodiodes_layout():
     return html.Div([
         create_header("Photodiodes", "Real-time Photodiode Monitoring"),
         
+        
         # Photodiode Selection Section
         html.Div(
-            className="pd-grid-container", # Uses the flex container
+            # Added style margin to match the graph card below
+            style={"margin": "0 20px 20px 20px"},
             children=[
                 html.Div(
-                    id="pd1-button",
-                    className="pd-stat-button",
+                    className="pd-grid-container", 
                     children=[
-                        html.Div("Fiber Output", className="pd-label"),
-                        html.Div(id="pd1-value", className="pd-value", children="--")
+                        html.Div(
+                            id="pd1-button",
+                            className="pd-stat-button",
+                            children=[
+                                html.Div("Fiber Output", className="pd-label"),
+                                html.Div(id="pd1-value", className="pd-value", children="--")
+                            ]
+                        ),
+                        html.Div(
+                            id="pd2-button",
+                            className="pd-stat-button",
+                            children=[
+                                html.Div("Grand Detection", className="pd-label"),
+                                html.Div(id="pd2-value", className="pd-value", children="--")
+                            ]
+                        ),
+                        html.Div(
+                            id="pd3-button",
+                            className="pd-stat-button",
+                            children=[
+                                html.Div("AOM 5", className="pd-label"),
+                                html.Div(id="pd3-value", className="pd-value", children="--")
+                            ]
+                        ),
+                        html.Div(
+                            id="pd4-button",
+                            className="pd-stat-button",
+                            children=[
+                                html.Div("AOM 3", className="pd-label"),
+                                html.Div(id="pd4-value", className="pd-value", children="--")
+                            ]
+                        ),
+                        html.Div(
+                            id="pd5-button",
+                            className="pd-stat-button",
+                            children=[
+                                html.Div("AOM 2", className="pd-label"),
+                                html.Div(id="pd5-value", className="pd-value", children="--")
+                            ]
+                        ),
                     ]
-                ),
-                html.Div(
-                    id="pd2-button",
-                    className="pd-stat-button",
-                    children=[
-                        html.Div("Grand Detection", className="pd-label"),
-                        html.Div(id="pd2-value", className="pd-value", children="--")
-                    ]
-                ),
-                html.Div(
-                    id="pd3-button",
-                    className="pd-stat-button",
-                    children=[
-                        html.Div("AOM 5", className="pd-label"),
-                        html.Div(id="pd3-value", className="pd-value", children="--")
-                    ]
-                ),
-                html.Div(
-                    id="pd4-button",
-                    className="pd-stat-button",
-                    children=[
-                        html.Div("AOM 3", className="pd-label"),
-                        html.Div(id="pd4-value", className="pd-value", children="--")
-                    ]
-                ),
-                html.Div(
-                    id="pd5-button",
-                    className="pd-stat-button",
-                    children=[
-                        html.Div("AOM 2", className="pd-label"),
-                        html.Div(id="pd5-value", className="pd-value", children="--")
-                    ]
-                ),
+                )
             ]
         ),
         
@@ -664,7 +671,8 @@ def data_retrieval_layout():
         # Main Card
         html.Div(
             className="sensor-card",
-            style={"maxWidth": "900px", "margin": "20px auto", "padding": "30px"},
+            # Updated style: Matches the margins of your other graph containers
+            style={"margin": "20px", "padding": "30px"},
             children=[
                 
                 # --- ROW 1: Data Type Selection (Horizontal) ---
@@ -679,7 +687,7 @@ def data_retrieval_layout():
                     },
                     children=[
                         # Label
-                        html.Label("1. Data Source", className="control-label", style={"marginBottom": "0", "minWidth": "120px"}),
+                        html.Label("Data Source", className="control-label", style={"marginBottom": "0", "minWidth": "120px"}),
                         
                         # Radio Buttons (Now sits next to label)
                         dcc.RadioItems(
@@ -718,7 +726,7 @@ def data_retrieval_layout():
                     },
                     children=[
                         # Label
-                        html.Label("2. Time Period", className="control-label", style={"marginBottom": "0", "minWidth": "120px"}),
+                        html.Label("Time Period", className="control-label", style={"marginBottom": "0", "minWidth": "120px"}),
                         
                         # Date Controls Group
                         html.Div(
