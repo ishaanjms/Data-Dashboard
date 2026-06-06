@@ -1,0 +1,28 @@
+# Python dependencies for the CsF1 sensor data dashboard.
+#
+# Recommended runtime:
+#   Python >= 3.10
+#
+# Install with:
+#   python -m pip install -r requirements.txt
+
+# Web API server used by be/sensor_api_server.py.
+Flask>=3.0
+
+# Dashboard framework used by fe/dash_app.py.
+dash>=2.16
+
+# Production WSGI server for hosted deployments.
+gunicorn>=22.0
+
+# Plotting library used for live and historical graphs.
+plotly>=5.20
+
+# CSV loading, date-range processing, and graph data preparation.
+pandas>=2.0
+
+# Timezone handling for IST/UTC conversion.
+pytz>=2024.1
+
+# Serial-port communication for the temperature/humidity reader.
+pyserial>=3.5
