@@ -10,3 +10,4 @@ COPY . .
 EXPOSE 7860
 
 CMD ["gunicorn", "app:server", "--bind", "0.0.0.0:7860", "--workers", "2"]
+
